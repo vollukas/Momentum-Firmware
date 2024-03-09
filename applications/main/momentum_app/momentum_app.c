@@ -17,7 +17,7 @@ bool momentum_app_apply(MomentumApp* app) {
     if(app->save_mainmenu_apps) {
         Stream* stream = file_stream_alloc(storage);
         if(file_stream_open(stream, MAINMENU_APPS_PATH, FSAM_READ_WRITE, FSOM_CREATE_ALWAYS)) {
-            stream_write_format(stream, "MenuAppList Version %u\n", 0);
+            stream_write_format(stream, "MenuAppList Version %u\n", 1);
             CharList_it_t it;
             CharList_it(it, app->mainmenu_app_exes);
             for(size_t i = 0; i < CharList_size(app->mainmenu_app_exes); i++) {
@@ -163,6 +163,7 @@ MomentumApp* momentum_app_alloc() {
     MomentumApp* app = malloc(sizeof(MomentumApp));
     app->gui = furi_record_open(RECORD_GUI);
     app->dialogs = furi_record_open(RECORD_DIALOGS);
+    app->expansion = furi_record_open(RECORD_EXPANSION);
     app->notification = furi_record_open(RECORD_NOTIFICATION);
 
     // View Dispatcher and Scene Manager
@@ -248,7 +249,13 @@ MomentumApp* momentum_app_alloc() {
             furi_string_replace_all(line, "\n", "");
             CharList_push_back(app->mainmenu_app_exes, strdup(furi_string_get_cstr(line)));
             flipper_application_load_name_and_icon(line, storage, NULL, line);
-            if(furi_string_start_with_str(line, "[")) {
+            if(!furi_string_cmp(line, "Momentum")) {
+                furi_string_set(line, "MNTM");
+            } else if(!furi_string_cmp(line, "125 kHz RFID")) {
+                furi_string_set(line, "RFID");
+            } else if(!furi_string_cmp(line, "Sub-GHz")) {
+                furi_string_set(line, "SubGHz");
+            } else if(furi_string_start_with_str(line, "[")) {
                 size_t trim = furi_string_search_str(line, "] ", 1);
                 if(trim != FURI_STRING_FAILURE) {
                     furi_string_right(line, trim + 2);
@@ -361,6 +368,7 @@ void momentum_app_free(MomentumApp* app) {
 
     // Records
     furi_record_close(RECORD_NOTIFICATION);
+    furi_record_close(RECORD_EXPANSION);
     furi_record_close(RECORD_DIALOGS);
     furi_record_close(RECORD_GUI);
     free(app);

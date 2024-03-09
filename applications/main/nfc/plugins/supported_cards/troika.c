@@ -1,11 +1,13 @@
 #include "nfc_supported_card_plugin.h"
-#include <flipper_application.h>
+#include <core/check.h>
 
+#include <flipper_application/flipper_application.h>
+
+#include <nfc/nfc_device.h>
+#include <bit_lib/bit_lib.h>
 #include <nfc/protocols/mf_classic/mf_classic_poller_sync.h>
 #include "../../api/mosgortrans/mosgortrans_util.h"
-
-#include <bit_lib.h>
-#include <datetime.h>
+#include "furi_hal_rtc.h"
 
 #define TAG "Troika"
 
@@ -71,14 +73,14 @@ static const MfClassicKeyPair troika_4k_keys[] = {
     {.a = 0x7A38E3511A38, .b = 0xAB16584C972A}, //30
     {.a = 0x7545DF809202, .b = 0xECF751084A80}, //31
     {.a = 0x5125974CD391, .b = 0xD3EAFB5DF46D}, //32
-    {.a = 0xFFFFFFFFFFFF, .b = 0xFFFFFFFFFFFF}, //33
-    {.a = 0xFFFFFFFFFFFF, .b = 0xFFFFFFFFFFFF}, //34
-    {.a = 0xFFFFFFFFFFFF, .b = 0xFFFFFFFFFFFF}, //35
-    {.a = 0xFFFFFFFFFFFF, .b = 0xFFFFFFFFFFFF}, //36
-    {.a = 0xFFFFFFFFFFFF, .b = 0xFFFFFFFFFFFF}, //37
-    {.a = 0xFFFFFFFFFFFF, .b = 0xFFFFFFFFFFFF}, //38
-    {.a = 0xFFFFFFFFFFFF, .b = 0xFFFFFFFFFFFF}, //39
-    {.a = 0xFFFFFFFFFFFF, .b = 0xFFFFFFFFFFFF}, //40
+    {.a = 0x7A86AA203788, .b = 0xE41242278CA2}, //33
+    {.a = 0xAFCEF64C9913, .b = 0x9DB96DCA4324}, //34
+    {.a = 0x04EAA462F70B, .b = 0xAC17B93E2FAE}, //35
+    {.a = 0xE734C210F27E, .b = 0x29BA8C3E9FDA}, //36
+    {.a = 0xD5524F591EED, .b = 0x5DAF42861B4D}, //37
+    {.a = 0xE4821A377B75, .b = 0xE8709E486465}, //38
+    {.a = 0x518DC6EEA089, .b = 0x97C64AC98CA4}, //39
+    {.a = 0xBB52F8CCE07F, .b = 0x6B6119752C70}, //40
 };
 
 static bool troika_get_card_config(TroikaCardConfig* config, MfClassicType type) {
@@ -88,7 +90,7 @@ static bool troika_get_card_config(TroikaCardConfig* config, MfClassicType type)
         config->data_sector = 11;
         config->keys = troika_1k_keys;
     } else if(type == MfClassicType4k) {
-        config->data_sector = 11;
+        config->data_sector = 8; // Further testing needed
         config->keys = troika_4k_keys;
     } else {
         success = false;
