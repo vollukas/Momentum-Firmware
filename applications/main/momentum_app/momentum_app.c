@@ -242,11 +242,21 @@ MomentumApp* momentum_app_alloc() {
     CharList_init(app->mainmenu_app_exes);
     Stream* stream = file_stream_alloc(storage);
     FuriString* line = furi_string_alloc();
-    if(file_stream_open(stream, MAINMENU_APPS_PATH, FSAM_READ, FSOM_OPEN_EXISTING)) {
-        stream_read_line(stream, line);
+    uint32_t version;
+    if(file_stream_open(stream, MAINMENU_APPS_PATH, FSAM_READ, FSOM_OPEN_EXISTING) &&
+       stream_read_line(stream, line) &&
+       sscanf(furi_string_get_cstr(line), "MenuAppList Version %lu", &version) == 1 &&
+       version <= 1) {
         while(stream_read_line(stream, line)) {
             furi_string_replace_all(line, "\r", "");
             furi_string_replace_all(line, "\n", "");
+            if(version == 0) {
+                if(!furi_string_cmp(line, "RFID")) {
+                    furi_string_set(line, "125 kHz RFID");
+                } else if(!furi_string_cmp(line, "SubGHz")) {
+                    furi_string_set(line, "Sub-GHz");
+                }
+            }
             CharList_push_back(app->mainmenu_app_exes, strdup(furi_string_get_cstr(line)));
             flipper_application_load_name_and_icon(line, storage, NULL, line);
             if(!furi_string_cmp(line, "Momentum")) {
@@ -309,15 +319,16 @@ MomentumApp* momentum_app_alloc() {
     app->dolphin_angry = stats.butthurt;
     furi_record_close(RECORD_DOLPHIN);
 
-    if(strcmp(version_get_version(NULL), "MNTM-DEV") == 0) {
-        app->version_tag = furi_string_alloc_printf("%s  ", version_get_version(NULL));
+    app->version_tag = furi_string_alloc_printf("%s ", version_get_version(NULL));
+    if(furi_string_start_with(app->version_tag, "mntm-dev")) {
+        furi_string_set(app->version_tag, "MNTM-DEV  ");
         const char* sha = version_get_githash(NULL);
         for(size_t i = 0; i < strlen(sha); ++i) {
             furi_string_push_back(app->version_tag, toupper(sha[i]));
         }
     } else {
-        app->version_tag = furi_string_alloc_printf(
-            "%s %s", version_get_version(NULL), version_get_builddate(NULL));
+        furi_string_replace(app->version_tag, "mntm", "MNTM");
+        furi_string_cat(app->version_tag, version_get_builddate(NULL));
     }
 
     return app;
