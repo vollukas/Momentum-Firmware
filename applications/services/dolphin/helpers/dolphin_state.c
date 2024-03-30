@@ -19,7 +19,7 @@ const uint32_t DOLPHIN_LEVELS[] = {100,   250,   450,   700,   1000,  1350,  175
                                    17500, 18850, 20250, 21700, 23200, 24750};
 const size_t DOLPHIN_LEVEL_COUNT = COUNT_OF(DOLPHIN_LEVELS);
 
-DolphinState* dolphin_state_alloc() {
+DolphinState* dolphin_state_alloc(void) {
     return malloc(sizeof(DolphinState));
 }
 
@@ -73,8 +73,10 @@ bool dolphin_state_load(DolphinState* dolphin_state) {
     return success;
 }
 
-uint64_t dolphin_state_timestamp() {
-    return furi_hal_rtc_get_timestamp();
+uint64_t dolphin_state_timestamp(void) {
+    DateTime datetime;
+    furi_hal_rtc_get_datetime(&datetime);
+    return datetime_datetime_to_timestamp(&datetime);
 }
 
 bool dolphin_state_is_levelup(uint32_t icounter) {
