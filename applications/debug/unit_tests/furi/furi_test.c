@@ -4,11 +4,12 @@
 #include "../minunit.h"
 
 // v2 tests
-void test_furi_create_open();
-void test_furi_concurrent_access();
-void test_furi_pubsub();
+void test_furi_create_open(void);
+void test_furi_concurrent_access(void);
+void test_furi_pubsub(void);
 
-void test_furi_memmgr();
+void test_furi_memmgr(void);
+void test_furi_memmgr_advanced(void);
 
 static int foo = 0;
 
@@ -37,6 +38,7 @@ MU_TEST(mu_test_furi_memmgr) {
     // this test is not accurate, but gives a basic understanding
     // that memory management is working fine
     test_furi_memmgr();
+    test_furi_memmgr_advanced();
 }
 
 MU_TEST_SUITE(test_suite) {
