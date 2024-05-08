@@ -1,6 +1,7 @@
 from pathlib import Path
-import subprocess
 import posixpath
+import re
+import os
 
 # For more details on these options, run 'fbt -h'
 
@@ -18,7 +19,25 @@ DEBUG = 0
 # Suffix to add to files when building distribution
 # If OS environment has DIST_SUFFIX set, it will be used instead
 
-DIST_SUFFIX = f"mntm-dev-{subprocess.check_output(['git', 'rev-parse', '--short=7', 'HEAD']).decode().strip()}"
+if not os.environ.get("DIST_SUFFIX"):
+    # Check scripts/get_env.py to mirror CI naming
+    def git(*args):
+        import subprocess
+
+        return (
+            subprocess.check_output(["git", *args], stderr=subprocess.DEVNULL)
+            .decode()
+            .strip()
+        )
+
+    try:
+        local_branch = git("symbolic-ref", "HEAD", "--short")
+        ref = git("config", "--get", f"branch.{local_branch}.merge")
+    except Exception:
+        ref = "refs/heads/detached"
+    branch_name = re.sub("refs/\w+/", "", ref)
+    commit_sha = git("rev-parse", "HEAD")[:8]
+    DIST_SUFFIX = "mntm-" + branch_name.replace("/", "_") + "-" + commit_sha
 
 # Coprocessor firmware
 COPRO_OB_DATA = "scripts/ob.data"

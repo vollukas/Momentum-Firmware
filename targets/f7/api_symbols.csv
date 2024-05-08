@@ -1,5 +1,5 @@
 entry,status,name,type,params
-Version,+,61.1,,
+Version,+,61.2,,
 Header,+,applications/drivers/subghz/cc1101_ext/cc1101_ext_interconnect.h,,
 Header,+,applications/main/archive/helpers/archive_helpers_ext.h,,
 Header,+,applications/main/subghz/subghz_fap.h,,
@@ -995,7 +995,6 @@ Function,+,elements_progress_bar,void,"Canvas*, int32_t, int32_t, size_t, float"
 Function,+,elements_progress_bar_with_text,void,"Canvas*, int32_t, int32_t, size_t, float, const char*"
 Function,+,elements_scrollable_text_line,void,"Canvas*, int32_t, int32_t, size_t, FuriString*, size_t, _Bool"
 Function,+,elements_scrollable_text_line_centered,void,"Canvas*, int32_t, int32_t, size_t, FuriString*, size_t, _Bool, _Bool"
-Function,+,elements_scrollable_text_line_str,void,"Canvas*, int32_t, int32_t, size_t, const char*, size_t, _Bool, _Bool"
 Function,+,elements_scrollbar,void,"Canvas*, size_t, size_t"
 Function,+,elements_scrollbar_horizontal,void,"Canvas*, int32_t, int32_t, size_t, size_t, size_t"
 Function,+,elements_scrollbar_pos,void,"Canvas*, int32_t, int32_t, size_t, size_t, size_t"
@@ -2963,6 +2962,7 @@ Function,+,protocol_dict_get_validate_count,uint32_t,"ProtocolDict*, size_t"
 Function,+,protocol_dict_get_write_data,_Bool,"ProtocolDict*, size_t, void*"
 Function,+,protocol_dict_render_brief_data,void,"ProtocolDict*, FuriString*, size_t"
 Function,+,protocol_dict_render_data,void,"ProtocolDict*, FuriString*, size_t"
+Function,+,protocol_dict_render_uid,void,"ProtocolDict*, FuriString*, size_t"
 Function,+,protocol_dict_set_data,void,"ProtocolDict*, size_t, const uint8_t*, size_t"
 Function,-,pulse_reader_alloc,PulseReader*,"const GpioPin*, uint32_t"
 Function,-,pulse_reader_free,void,PulseReader*
@@ -3548,6 +3548,7 @@ Function,+,tar_archive_free,void,TarArchive*
 Function,+,tar_archive_get_entries_count,int32_t,TarArchive*
 Function,+,tar_archive_open,_Bool,"TarArchive*, const char*, TarOpenMode"
 Function,+,tar_archive_set_file_callback,void,"TarArchive*, tar_unpack_file_cb, void*"
+Function,+,tar_archive_set_read_callback,void,"TarArchive*, tar_unpack_read_cb, void*"
 Function,+,tar_archive_store_data,_Bool,"TarArchive*, const char*, const uint8_t*, const int32_t"
 Function,+,tar_archive_unpack_file,_Bool,"TarArchive*, const char*, const char*"
 Function,+,tar_archive_unpack_to,_Bool,"TarArchive*, const char*, Storage_name_converter"
@@ -3939,6 +3940,7 @@ Variable,+,I_ir_scope_10px,Icon,
 Variable,+,I_js_script_10px,Icon,
 Variable,+,I_keyboard_10px,Icon,
 Variable,+,I_loading_10px,Icon,
+Variable,+,I_mag_card_10px,Icon,
 Variable,+,I_max_24x23,Icon,
 Variable,+,I_max_hover_24x23,Icon,
 Variable,+,I_menu_text_20x5,Icon,
