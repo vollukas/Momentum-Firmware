@@ -197,6 +197,7 @@ static bool hid_media_input_callback(InputEvent* event, void* context) {
             hid_media_process_release(hid_media, event);
         }
     }
+
     return consumed;
 }
 

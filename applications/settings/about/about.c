@@ -41,7 +41,7 @@ static DialogMessageButton about_screen_product(DialogsApp* dialogs, DialogMessa
 static DialogMessageButton about_screen_address(DialogsApp* dialogs, DialogMessage* message) {
     DialogMessageButton result;
 
-    const char* screen_text = "Flipper Devices Inc\n"
+    const char* screen_text = "Flipper Devices Inc.\n"
                               "Suite B #551, 2803\n"
                               "Philadelphia Pike, Claymont\n"
                               "DE, USA 19703\n";
@@ -56,7 +56,7 @@ static DialogMessageButton about_screen_compliance(DialogsApp* dialogs, DialogMe
     DialogMessageButton result;
 
     const char* screen_text = "For all compliance\n"
-                              "certificates please visit:\n"
+                              "certificates, please visit:\n"
                               "www.flipp.dev/compliance";
 
     dialog_message_set_text(message, screen_text, 0, 0, AlignLeft, AlignTop);
@@ -97,7 +97,7 @@ static DialogMessageButton about_screen_cert_china_0(DialogsApp* dialogs, Dialog
 static DialogMessageButton about_screen_cert_china_1(DialogsApp* dialogs, DialogMessage* message) {
     DialogMessageButton result;
 
-    dialog_message_set_icon(message, &I_CertificationChina1_122x47, 3, 3);
+    dialog_message_set_icon(message, &I_CertificationChina1_124x47, 3, 3);
     dialog_message_set_text(
         message, furi_hal_version_get_srrc_id(), 55, 11, AlignLeft, AlignBottom);
     result = dialog_message_show(dialogs, message);
@@ -173,14 +173,22 @@ static DialogMessageButton about_screen_fw_version(DialogsApp* dialogs, DialogMe
         furi_hal_info_get_api_version(&api_major, &api_minor);
         furi_string_cat_printf(
             buffer,
-            "%s   %s\n%s   F%d:%d.%d   %s\nhttps://momentum-fw.dev/",
+            "%s [%s]\n%s%s [%d.%d] %s\n[%d] ",
             version_get_version(ver),
             version_get_builddate(ver),
+            version_get_dirty_flag(ver) ? "[!] " : "",
             version_get_githash(ver),
-            version_get_target(ver),
             api_major,
             api_minor,
-            c2_ver ? c2_ver->StackTypeString : "<none>");
+            c2_ver ? c2_ver->StackTypeString : "<none>",
+            version_get_target(ver));
+        if(!strcmp(version_get_version(ver), "mntm-dev") &&
+           strcmp(version_get_gitbranch(ver), "dev")) {
+            // Not a tag but not dev branch, show custom branch
+            furi_string_cat(buffer, version_get_gitbranch(ver));
+        } else {
+            furi_string_cat(buffer, "momentum-fw.dev");
+        }
     }
 
     dialog_message_set_header(message, "Firmware Info:", 0, 0, AlignLeft, AlignTop);
@@ -226,9 +234,11 @@ int32_t about_settings_app(void* p) {
     int32_t ret = 0;
     while(1) {
         if(screen_index >= COUNT_OF(about_screens) - 1) {
-            dialog_message_set_buttons(message, "Back", NULL, NULL);
+            dialog_message_set_buttons(message, "Prev.", NULL, NULL);
+        } else if(screen_index == 0) {
+            dialog_message_set_buttons(message, NULL, NULL, "Next");
         } else {
-            dialog_message_set_buttons(message, "Back", NULL, "Next");
+            dialog_message_set_buttons(message, "Prev.", NULL, "Next");
         }
 
         screen_result = about_screens[screen_index](dialogs, message);

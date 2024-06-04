@@ -7,7 +7,6 @@
 #include <core/log.h>
 #include <gui/modules/file_browser_worker.h>
 #include <flipper_application/flipper_application.h>
-#include <math.h>
 #include <furi_hal.h>
 
 static void
@@ -585,7 +584,9 @@ void archive_switch_tab(ArchiveBrowserView* browser, InputKey key) {
             bool is_browser = !strcmp(archive_get_tab_ext(tab), "*");
             bool skip_assets = !is_browser;
             // Hide dot files everywhere except Browser if in debug mode
-            bool hide_dot_files = !is_browser ? true : tab == ArchiveTabInternal ? false : true;
+            bool hide_dot_files = !is_browser               ? true :
+                                  tab == ArchiveTabInternal ? false :
+                                                              !momentum_settings.show_hidden_files;
             archive_file_browser_set_path(
                 browser, browser->path, archive_get_tab_ext(tab), skip_assets, hide_dot_files);
             tab_empty = false; // Empty check will be performed later
