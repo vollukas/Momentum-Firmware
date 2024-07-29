@@ -11,9 +11,9 @@
 
 #define TAG "BtSrv"
 
-#define BT_RPC_EVENT_BUFF_SENT (1UL << 0)
+#define BT_RPC_EVENT_BUFF_SENT    (1UL << 0)
 #define BT_RPC_EVENT_DISCONNECTED (1UL << 1)
-#define BT_RPC_EVENT_ALL (BT_RPC_EVENT_BUFF_SENT | BT_RPC_EVENT_DISCONNECTED)
+#define BT_RPC_EVENT_ALL          (BT_RPC_EVENT_BUFF_SENT | BT_RPC_EVENT_DISCONNECTED)
 
 #define ICON_SPACER 2
 
@@ -460,6 +460,8 @@ int32_t bt_srv(void* p) {
         FURI_LOG_W(TAG, "Skipping start in special boot mode");
         ble_glue_wait_for_c2_start(FURI_HAL_BT_C2_START_TIMEOUT);
         furi_record_create(RECORD_BT, bt);
+
+        furi_thread_suspend(furi_thread_get_current_id());
         return 0;
     }
 

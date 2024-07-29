@@ -53,56 +53,72 @@ def pack_anim(src: pathlib.Path, dst: pathlib.Path):
         if not frame.is_file():
             continue
         if frame.name == "meta.txt":
-            shutil.copyfile(src / "meta.txt", dst / "meta.txt")
-            continue
-        elif frame.name.startswith("frame_") and frame.name.endswith(".bm"):
-            shutil.copyfile(src / frame.name, dst / frame.name)
-            continue
+            shutil.copyfile(frame, dst / frame.name)
         elif frame.name.startswith("frame_"):
-            if frame.suffix == ".bm":
-                shutil.copyfile(frame, dst / frame.name)
-            elif frame.suffix == ".png":
+            if frame.suffix == ".png":
                 (dst / frame.with_suffix(".bm").name).write_bytes(convert_bm(frame))
+            elif frame.suffix == ".bm":
+                if not (dst / frame.name).is_file():
+                    shutil.copyfile(frame, dst / frame.name)
 
 
 def pack_icon_animated(src: pathlib.Path, dst: pathlib.Path):
-    if not (src / "frame_rate").is_file():
+    if not (src / "frame_rate").is_file() and not (src / "meta").is_file():
         return
     dst.mkdir(parents=True, exist_ok=True)
     frame_count = 0
     frame_rate = None
     size = None
-    for frame in src.iterdir():
+    files = [file for file in src.iterdir() if file.is_file()]
+    for frame in sorted(files, key=lambda x: x.name):
         if not frame.is_file():
             continue
         if frame.name == "frame_rate":
-            frame_rate = int((src / "frame_rate").read_text())
-            continue
-        elif frame.name.startswith("frame_"):
-            frame_count += 1
-            if not size:
-                size = Image.open(frame).size
-            (dst / frame.with_suffix(".bm").name).write_bytes(convert_bm(frame))
-    (dst / "meta").write_bytes(struct.pack("<IIII", *size, frame_rate, frame_count))
+            frame_rate = int(frame.read_text().strip())
+        elif frame.name == "meta":
+            shutil.copyfile(frame, dst / frame.name)
+        else:
+            dst_frame = dst / f"frame_{frame_count:02}.bm"
+            if frame.suffix == ".png":
+                if not size:
+                    size = Image.open(frame).size
+                dst_frame.write_bytes(convert_bm(frame))
+                frame_count += 1
+            elif frame.suffix == ".bm":
+                if frame.with_suffix(".png") not in files:
+                    shutil.copyfile(frame, dst_frame)
+                    frame_count += 1
+    if size is not None and frame_rate is not None:
+        (dst / "meta").write_bytes(struct.pack("<IIII", *size, frame_rate, frame_count))
 
 
 def pack_icon_static(src: pathlib.Path, dst: pathlib.Path):
     dst.parent.mkdir(parents=True, exist_ok=True)
-    dst.with_suffix(".bmx").write_bytes(convert_bmx(src))
+    if src.suffix == ".png":
+        dst.with_suffix(".bmx").write_bytes(convert_bmx(src))
+    elif src.suffix == ".bmx":
+        if not dst.is_file():
+            shutil.copyfile(src, dst)
 
 
 def pack_font(src: pathlib.Path, dst: pathlib.Path):
-    code = src.read_bytes().split(b' U8G2_FONT_SECTION("')[1].split(b'") =')[1].strip()
-    font = b""
-    for line in code.splitlines():
-        if line.count(b'"') == 2:
-            font += (
-                line[line.find(b'"') + 1 : line.rfind(b'"')]
-                .decode("unicode_escape")
-                .encode("latin_1")
-            )
     dst.parent.mkdir(parents=True, exist_ok=True)
-    dst.with_suffix(".u8f").write_bytes(font)
+    if src.suffix == ".c":
+        code = (
+            src.read_bytes().split(b' U8G2_FONT_SECTION("')[1].split(b'") =')[1].strip()
+        )
+        font = b""
+        for line in code.splitlines():
+            if line.count(b'"') == 2:
+                font += (
+                    line[line.find(b'"') + 1 : line.rfind(b'"')]
+                    .decode("unicode_escape")
+                    .encode("latin_1")
+                )
+        dst.with_suffix(".u8f").write_bytes(font)
+    elif src.suffix == ".u8f":
+        if not dst.is_file():
+            shutil.copyfile(src, dst)
 
 
 def pack(
@@ -113,7 +129,7 @@ def pack(
     for source in input.iterdir():
         if source == output:
             continue
-        if not source.is_dir():
+        if not source.is_dir() or source.name.startswith("."):
             continue
 
         logger(f"Pack: custom user pack '{source.name}'")
@@ -159,7 +175,7 @@ def pack(
                         pack_icon_animated(
                             icon, packed / "Icons" / icons.name / icon.name
                         )
-                    elif icon.is_file() and icon.suffix == ".png":
+                    elif icon.is_file() and icon.suffix in (".png", ".bmx"):
                         logger(
                             f"Compile: icon for pack '{source.name}': {icons.name}/{icon.name}"
                         )
@@ -172,7 +188,7 @@ def pack(
                 if (
                     not font.is_file()
                     or font.name.startswith(".")
-                    or font.suffix != ".c"
+                    or font.suffix not in (".c", ".u8f")
                 ):
                     continue
                 logger(f"Compile: font for pack '{source.name}': {font.name}")

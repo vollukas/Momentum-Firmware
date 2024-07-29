@@ -8,6 +8,7 @@
 #include <dolphin/dolphin_i.h>
 #include <dolphin/helpers/dolphin_state.h>
 #include <furi.h>
+#include <furi_hal.h>
 #include <m-array.h>
 #include <momentum/momentum.h>
 #include <m-string.h>
@@ -496,8 +497,7 @@ static bool menu_input_callback(InputEvent* event, void* context) {
 
 static void menu_scroll_timer_callback(void* context) {
     Menu* menu = context;
-    with_view_model(
-        menu->view, MenuModel * model, { model->scroll_counter++; }, true);
+    with_view_model(menu->view, MenuModel * model, { model->scroll_counter++; }, true);
 }
 
 static void menu_enter(void* context) {
@@ -559,8 +559,7 @@ void menu_free(Menu* menu) {
     furi_check(menu);
 
     menu_reset(menu);
-    with_view_model(
-        menu->view, MenuModel * model, { MenuItemArray_clear(model->items); }, false);
+    with_view_model(menu->view, MenuModel * model, { MenuItemArray_clear(model->items); }, false);
     view_free(menu->view);
     furi_timer_free(menu->scroll_timer);
 
@@ -569,7 +568,7 @@ void menu_free(Menu* menu) {
 
 View* menu_get_view(Menu* menu) {
     furi_check(menu);
-    return (menu->view);
+    return menu->view;
 }
 
 void menu_add_item(
@@ -616,6 +615,47 @@ void menu_reset(Menu* menu) {
         true);
 }
 
+static void menu_set_position(Menu* menu, uint32_t position) {
+    furi_check(menu);
+
+    with_view_model(
+        menu->view,
+        MenuModel * model,
+        {
+            if(position < MenuItemArray_size(model->items) && position != model->position) {
+                model->scroll_counter = 0;
+
+                MenuItem* item = MenuItemArray_get(model->items, model->position);
+                icon_animation_stop(item->icon);
+
+                item = MenuItemArray_get(model->items, position);
+                icon_animation_start(item->icon);
+
+                model->position = position;
+            }
+        },
+        true);
+}
+
+uint32_t menu_get_selected_item(Menu* menu) {
+    furi_check(menu);
+
+    uint32_t selected_item_index = 0;
+
+    with_view_model(
+        menu->view,
+        MenuModel * model,
+        {
+            if(model->position < MenuItemArray_size(model->items)) {
+                const MenuItem* item = MenuItemArray_cget(model->items, model->position);
+                selected_item_index = item->index;
+            }
+        },
+        false);
+
+    return selected_item_index;
+}
+
 void menu_set_selected_item(Menu* menu, uint32_t index) {
     furi_check(menu);
 
@@ -623,17 +663,23 @@ void menu_set_selected_item(Menu* menu, uint32_t index) {
         menu->view,
         MenuModel * model,
         {
-            if(index < MenuItemArray_size(model->items) && index != model->position) {
-                model->scroll_counter = 0;
-
-                MenuItem* item = MenuItemArray_get(model->items, model->position);
-                icon_animation_stop(item->icon);
-
-                item = MenuItemArray_get(model->items, index);
-                icon_animation_start(item->icon);
-
-                model->position = index;
+            size_t position = 0;
+            MenuItemArray_it_t it;
+            for(MenuItemArray_it(it, model->items); !MenuItemArray_end_p(it);
+                MenuItemArray_next(it)) {
+                if(index == MenuItemArray_cref(it)->index) {
+                    break;
+                }
+                position++;
             }
+
+            const size_t items_size = MenuItemArray_size(model->items);
+
+            if(position >= items_size) {
+                position = 0;
+            }
+
+            model->position = position;
         },
         true);
 }
@@ -677,7 +723,7 @@ static void menu_process_up(Menu* menu) {
             }
         },
         false);
-    menu_set_selected_item(menu, position);
+    menu_set_position(menu, position);
 }
 
 static void menu_process_down(Menu* menu) {
@@ -719,7 +765,7 @@ static void menu_process_down(Menu* menu) {
             }
         },
         false);
-    menu_set_selected_item(menu, position);
+    menu_set_position(menu, position);
 }
 
 static void menu_process_left(Menu* menu) {
@@ -778,7 +824,7 @@ static void menu_process_left(Menu* menu) {
             }
         },
         false);
-    menu_set_selected_item(menu, position);
+    menu_set_position(menu, position);
 }
 
 static void menu_process_right(Menu* menu) {
@@ -842,7 +888,7 @@ static void menu_process_right(Menu* menu) {
             }
         },
         false);
-    menu_set_selected_item(menu, position);
+    menu_set_position(menu, position);
 }
 
 static void menu_process_ok(Menu* menu) {

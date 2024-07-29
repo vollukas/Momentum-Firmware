@@ -49,8 +49,8 @@ static const uint8_t keyboard_origin_y = 29;
 static const uint8_t keyboard_row_count = 3;
 static const uint8_t keyboard_count = 2;
 
-#define ENTER_KEY '\r'
-#define BACKSPACE_KEY '\b'
+#define ENTER_KEY           '\r'
+#define BACKSPACE_KEY       '\b'
 #define SWITCH_KEYBOARD_KEY '\t'
 
 static const TextInputKey keyboard_keys_row_1[] = {
@@ -228,14 +228,14 @@ static char get_selected_char(TextInputModel* model) {
 }
 
 static bool char_is_lowercase(char letter) {
-    return (letter >= 0x61 && letter <= 0x7A);
+    return letter >= 0x61 && letter <= 0x7A;
 }
 
 static char char_to_uppercase(const char letter) {
     if(letter == '_') {
         return 0x20;
     } else if(char_is_lowercase(letter)) {
-        return (letter - 0x20);
+        return letter - 0x20;
     } else {
         return letter;
     }
@@ -891,6 +891,5 @@ void* text_input_get_validator_callback_context(TextInput* text_input) {
 
 void text_input_set_header_text(TextInput* text_input, const char* text) {
     furi_check(text_input);
-    with_view_model(
-        text_input->view, TextInputModel * model, { model->header = text; }, true);
+    with_view_model(text_input->view, TextInputModel * model, { model->header = text; }, true);
 }

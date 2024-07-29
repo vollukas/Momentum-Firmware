@@ -10,10 +10,10 @@
 #include "infrared_signal.h"
 #include "infrared_brute_force.h"
 
-#define INFRARED_CLI_BUF_SIZE (10U)
-#define INFRARED_CLI_FILE_NAME_SIZE (256U)
-#define INFRARED_FILE_EXTENSION ".ir"
-#define INFRARED_ASSETS_FOLDER EXT_PATH("infrared/assets")
+#define INFRARED_CLI_BUF_SIZE            (10U)
+#define INFRARED_CLI_FILE_NAME_SIZE      (256U)
+#define INFRARED_FILE_EXTENSION          ".ir"
+#define INFRARED_ASSETS_FOLDER           EXT_PATH("infrared/assets")
 #define INFRARED_BRUTE_FORCE_DUMMY_INDEX 0
 
 DICT_DEF2(dict_signals, FuriString*, FURI_STRING_OPLIST, int, M_DEFAULT_OPLIST)
@@ -546,10 +546,11 @@ static void infrared_cli_start_ir(Cli* cli, FuriString* args, void* context) {
 }
 
 #include <flipper_application/flipper_application.h>
+#include <cli/cli_i.h>
 
 static const FlipperAppPluginDescriptor plugin_descriptor = {
-    .appid = "infrared_cli",
-    .ep_api_version = 1,
+    .appid = CLI_PLUGIN_APP_ID,
+    .ep_api_version = CLI_PLUGIN_API_VERSION,
     .entry_point = &infrared_cli_start_ir,
 };
 

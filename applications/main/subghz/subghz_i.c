@@ -6,7 +6,6 @@
 #include <notification/notification.h>
 #include <notification/notification_messages.h>
 #include <flipper_format/flipper_format.h>
-
 #include <flipper_format/flipper_format_i.h>
 
 #define TAG "SubGhz"
@@ -442,7 +441,7 @@ void subghz_unlock(SubGhz* subghz) {
 
 bool subghz_is_locked(SubGhz* subghz) {
     furi_assert(subghz);
-    return (subghz->lock == SubGhzLockOn);
+    return subghz->lock == SubGhzLockOn;
 }
 
 void subghz_rx_key_state_set(SubGhz* subghz, SubGhzRxKeyState state) {

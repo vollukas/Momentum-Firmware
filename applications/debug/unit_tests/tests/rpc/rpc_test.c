@@ -1,10 +1,5 @@
-#include <core/check.h>
-#include <core/record.h>
 #include <furi.h>
 #include <stdint.h>
-
-#include <FreeRTOS.h>
-#include <semphr.h>
 
 #include <rpc/rpc.h>
 #include <rpc/rpc_i.h>
@@ -40,22 +35,23 @@ static uint32_t command_id = 0;
 typedef struct {
     RpcSession* session;
     FuriStreamBuffer* output_stream;
-    SemaphoreHandle_t close_session_semaphore;
-    SemaphoreHandle_t terminate_semaphore;
+    FuriSemaphore* close_session_semaphore;
+    FuriSemaphore* terminate_semaphore;
     uint32_t timeout;
 } RpcSessionContext;
 
 static RpcSessionContext rpc_session[TEST_RPC_SESSIONS];
 
 #define TAG "UnitTestsRpc"
-#define MAX_RECEIVE_OUTPUT_TIMEOUT 3000
-#define MAX_NAME_LENGTH 254
-#define MAX_DATA_SIZE 512u // have to be exact as in rpc_storage.c
-#define TEST_DIR TEST_DIR_NAME "/"
-#define TEST_DIR_NAME EXT_PATH("unit_tests_tmp")
-#define MD5SUM_SIZE 16
 
-#define PING_REQUEST 0
+#define MAX_RECEIVE_OUTPUT_TIMEOUT 3000
+#define MAX_NAME_LENGTH            254
+#define MAX_DATA_SIZE              512u // have to be exact as in rpc_storage.c
+#define TEST_DIR_NAME              EXT_PATH(".tmp/unit_tests/rpc")
+#define TEST_DIR                   TEST_DIR_NAME "/"
+#define MD5SUM_SIZE                16
+
+#define PING_REQUEST  0
 #define PING_RESPONSE 1
 #define WRITE_REQUEST 0
 #define READ_RESPONSE 1
@@ -96,8 +92,8 @@ static void test_rpc_setup(void) {
 
     rpc_session[0].output_stream = furi_stream_buffer_alloc(4096, 1);
     rpc_session_set_send_bytes_callback(rpc_session[0].session, output_bytes_callback);
-    rpc_session[0].close_session_semaphore = xSemaphoreCreateBinary();
-    rpc_session[0].terminate_semaphore = xSemaphoreCreateBinary();
+    rpc_session[0].close_session_semaphore = furi_semaphore_alloc(1, 0);
+    rpc_session[0].terminate_semaphore = furi_semaphore_alloc(1, 0);
     rpc_session_set_close_callback(rpc_session[0].session, test_rpc_session_close_callback);
     rpc_session_set_terminated_callback(
         rpc_session[0].session, test_rpc_session_terminated_callback);
@@ -116,8 +112,8 @@ static void test_rpc_setup_second_session(void) {
 
     rpc_session[1].output_stream = furi_stream_buffer_alloc(1000, 1);
     rpc_session_set_send_bytes_callback(rpc_session[1].session, output_bytes_callback);
-    rpc_session[1].close_session_semaphore = xSemaphoreCreateBinary();
-    rpc_session[1].terminate_semaphore = xSemaphoreCreateBinary();
+    rpc_session[1].close_session_semaphore = furi_semaphore_alloc(1, 0);
+    rpc_session[1].terminate_semaphore = furi_semaphore_alloc(1, 0);
     rpc_session_set_close_callback(rpc_session[1].session, test_rpc_session_close_callback);
     rpc_session_set_terminated_callback(
         rpc_session[1].session, test_rpc_session_terminated_callback);
@@ -126,13 +122,15 @@ static void test_rpc_setup_second_session(void) {
 
 static void test_rpc_teardown(void) {
     furi_check(rpc_session[0].close_session_semaphore);
-    xSemaphoreTake(rpc_session[0].terminate_semaphore, 0);
+    furi_semaphore_acquire(rpc_session[0].terminate_semaphore, 0);
     rpc_session_close(rpc_session[0].session);
-    furi_check(xSemaphoreTake(rpc_session[0].terminate_semaphore, portMAX_DELAY));
+    furi_check(
+        furi_semaphore_acquire(rpc_session[0].terminate_semaphore, FuriWaitForever) ==
+        FuriStatusOk);
     furi_record_close(RECORD_RPC);
     furi_stream_buffer_free(rpc_session[0].output_stream);
-    vSemaphoreDelete(rpc_session[0].close_session_semaphore);
-    vSemaphoreDelete(rpc_session[0].terminate_semaphore);
+    furi_semaphore_free(rpc_session[0].close_session_semaphore);
+    furi_semaphore_free(rpc_session[0].terminate_semaphore);
     ++command_id;
     rpc_session[0].output_stream = NULL;
     rpc_session[0].close_session_semaphore = NULL;
@@ -142,12 +140,14 @@ static void test_rpc_teardown(void) {
 
 static void test_rpc_teardown_second_session(void) {
     furi_check(rpc_session[1].close_session_semaphore);
-    xSemaphoreTake(rpc_session[1].terminate_semaphore, 0);
+    furi_semaphore_acquire(rpc_session[1].terminate_semaphore, 0);
     rpc_session_close(rpc_session[1].session);
-    furi_check(xSemaphoreTake(rpc_session[1].terminate_semaphore, portMAX_DELAY));
+    furi_check(
+        furi_semaphore_acquire(rpc_session[1].terminate_semaphore, FuriWaitForever) ==
+        FuriStatusOk);
     furi_stream_buffer_free(rpc_session[1].output_stream);
-    vSemaphoreDelete(rpc_session[1].close_session_semaphore);
-    vSemaphoreDelete(rpc_session[1].terminate_semaphore);
+    furi_semaphore_free(rpc_session[1].close_session_semaphore);
+    furi_semaphore_free(rpc_session[1].terminate_semaphore);
     ++command_id;
     rpc_session[1].output_stream = NULL;
     rpc_session[1].close_session_semaphore = NULL;
@@ -204,14 +204,14 @@ static void test_rpc_session_close_callback(void* context) {
     furi_check(context);
     RpcSessionContext* callbacks_context = context;
 
-    xSemaphoreGive(callbacks_context->close_session_semaphore);
+    furi_check(furi_semaphore_release(callbacks_context->close_session_semaphore) == FuriStatusOk);
 }
 
 static void test_rpc_session_terminated_callback(void* context) {
     furi_check(context);
     RpcSessionContext* callbacks_context = context;
 
-    xSemaphoreGive(callbacks_context->terminate_semaphore);
+    furi_check(furi_semaphore_release(callbacks_context->terminate_semaphore) == FuriStatusOk);
 }
 
 static void test_rpc_print_message_list(MsgList_t msg_list) {
@@ -555,7 +555,7 @@ static bool test_rpc_pb_stream_read(pb_istream_t* istream, pb_byte_t* buf, size_
     time_left = MAX(time_left, 0);
     bytes_received =
         furi_stream_buffer_receive(session_context->output_stream, buf, count, time_left);
-    return (count == bytes_received);
+    return count == bytes_received;
 }
 
 static void
@@ -972,7 +972,7 @@ MU_TEST(test_storage_info) {
 }
 
 #define TEST_DIR_STAT_NAME TEST_DIR "stat_dir"
-#define TEST_DIR_STAT TEST_DIR_STAT_NAME "/"
+#define TEST_DIR_STAT      TEST_DIR_STAT_NAME "/"
 MU_TEST(test_storage_stat) {
     test_create_dir(TEST_DIR_STAT_NAME);
     test_create_file(TEST_DIR_STAT "empty.txt", 0);
@@ -1213,7 +1213,7 @@ static void test_storage_delete_run(
 }
 
 #define TEST_DIR_RMRF_NAME TEST_DIR "rmrf_test"
-#define TEST_DIR_RMRF TEST_DIR_RMRF_NAME "/"
+#define TEST_DIR_RMRF      TEST_DIR_RMRF_NAME "/"
 MU_TEST(test_storage_delete_recursive) {
     test_create_dir(TEST_DIR_RMRF_NAME);
 
@@ -1645,7 +1645,7 @@ static void test_rpc_feed_rubbish_run(
 
     test_rpc_add_empty_to_list(expected, PB_CommandStatus_ERROR_DECODE, 0);
 
-    furi_check(!xSemaphoreTake(rpc_session[0].close_session_semaphore, 0));
+    furi_check(furi_semaphore_acquire(rpc_session[0].close_session_semaphore, 0) != FuriStatusOk);
     test_rpc_encode_and_feed(input_before, 0);
     test_send_rubbish(rpc_session[0].session, pattern, pattern_size, size);
     test_rpc_encode_and_feed(input_after, 0);

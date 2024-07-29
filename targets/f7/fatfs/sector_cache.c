@@ -7,7 +7,7 @@
 #include <furi_hal_memory.h>
 
 #define SECTOR_SIZE 512
-#define N_SECTORS 8
+#define N_SECTORS   8
 
 typedef struct {
     uint32_t itr;
@@ -19,7 +19,7 @@ static SectorCache* cache = NULL;
 
 void sector_cache_init(void) {
     if(cache == NULL) {
-        cache = memmgr_aux_pool_alloc(sizeof(SectorCache));
+        cache = memmgr_alloc_from_pool(sizeof(SectorCache));
     }
 
     if(cache != NULL) {

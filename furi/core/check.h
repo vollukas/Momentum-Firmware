@@ -20,17 +20,18 @@
 extern "C" {
 #endif
 
-#if !defined(FURI_RAM_EXEC) && !defined(FURI_DEBUG)
-#define __FURI_TRACE
-#endif
+// When enabled will use file paths instead of "furi_check failed"
+// #if !defined(FURI_RAM_EXEC) && !defined(FURI_DEBUG)
+// #define __FURI_TRACE
+// #endif
 
 // Flags instead of pointers will save ~4 bytes on furi_assert and furi_check calls.
 #ifndef __FURI_TRACE
 #define __FURI_ASSERT_MESSAGE_FLAG (0x01)
-#define __FURI_CHECK_MESSAGE_FLAG (0x02)
+#define __FURI_CHECK_MESSAGE_FLAG  (0x02)
 #else
 #define __FURI_ASSERT_MESSAGE_FLAG __FILE__
-#define __FURI_CHECK_MESSAGE_FLAG __FILE__
+#define __FURI_CHECK_MESSAGE_FLAG  __FILE__
 #endif
 
 /** Crash system */

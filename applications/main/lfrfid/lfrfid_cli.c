@@ -23,7 +23,7 @@ static void lfrfid_cli_print_usage(void) {
         "rfid raw_emulate <filename>                   - emulate raw data (not very useful, but helps debug protocols)\r\n");
     printf(
         "rfid raw_analyze <filename>                   - outputs raw data to the cli and tries to decode it (useful for protocol development)\r\n");
-};
+}
 
 typedef struct {
     ProtocolId protocol;
@@ -570,10 +570,11 @@ static void lfrfid_cli(Cli* cli, FuriString* args, void* context) {
 }
 
 #include <flipper_application/flipper_application.h>
+#include <cli/cli_i.h>
 
 static const FlipperAppPluginDescriptor plugin_descriptor = {
-    .appid = "lfrfid_cli",
-    .ep_api_version = 1,
+    .appid = CLI_PLUGIN_APP_ID,
+    .ep_api_version = CLI_PLUGIN_API_VERSION,
     .entry_point = &lfrfid_cli,
 };
 

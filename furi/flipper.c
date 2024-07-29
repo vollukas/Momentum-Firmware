@@ -33,19 +33,21 @@ static void flipper_print_version(const char* target, const Version* version) {
 }
 
 #ifndef FURI_RAM_EXEC
-#include <bt/bt_settings.h>
-#include <bt/bt_service/bt_i.h>
-#include <power/power_settings.h>
-#include <desktop/desktop_settings.h>
-#include <notification/notification_app.h>
-#include <dolphin/helpers/dolphin_state.h>
-#include <applications/main/u2f/u2f_data.h>
-#include <applications/main/infrared/infrared_app.h>
-#include <expansion/expansion_settings_filename.h>
 #include <applications/main/archive/helpers/archive_favorites.h>
-#include <momentum/namespoof.h>
-#include <momentum/momentum.h>
+#include <applications/main/infrared/infrared_app.h>
+#include <applications/main/u2f/u2f_data.h>
 #include <assets_icons.h>
+#include <bt/bt_service/bt_i.h>
+#include <bt/bt_settings.h>
+#include <desktop/desktop_settings.h>
+#include <dolphin/helpers/dolphin_state.h>
+#include <expansion/expansion_settings_filename.h>
+#include <loader/loader_menu.h>
+#include <momentum/asset_packs.h>
+#include <momentum/namespoof.h>
+#include <momentum/settings_i.h>
+#include <notification/notification_app.h>
+#include <power/power_settings.h>
 
 void flipper_migrate_files() {
     Storage* storage = furi_record_open(RECORD_STORAGE);
@@ -106,8 +108,7 @@ void flipper_start_service(const FlipperInternalApplication* service) {
     FURI_LOG_D(TAG, "Starting service %s", service->name);
 
     FuriThread* thread =
-        furi_thread_alloc_ex(service->name, service->stack_size, service->app, NULL);
-    furi_thread_mark_as_service(thread);
+        furi_thread_alloc_service(service->name, service->stack_size, service->app, NULL);
     furi_thread_set_appid(thread, service->appid);
 
     furi_thread_start(thread);
@@ -169,17 +170,12 @@ void flipper_init(void) {
     FURI_LOG_I(TAG, "Startup complete");
 }
 
-PLACE_IN_SECTION("MB_MEM2") static StaticTask_t idle_task_tcb;
-PLACE_IN_SECTION("MB_MEM2") static StackType_t idle_task_stack[configIDLE_TASK_STACK_DEPTH];
-PLACE_IN_SECTION("MB_MEM2") static StaticTask_t timer_task_tcb;
-PLACE_IN_SECTION("MB_MEM2") static StackType_t timer_task_stack[configTIMER_TASK_STACK_DEPTH];
-
 void vApplicationGetIdleTaskMemory(
     StaticTask_t** tcb_ptr,
     StackType_t** stack_ptr,
     uint32_t* stack_size) {
-    *tcb_ptr = &idle_task_tcb;
-    *stack_ptr = idle_task_stack;
+    *tcb_ptr = memmgr_alloc_from_pool(sizeof(StaticTask_t));
+    *stack_ptr = memmgr_alloc_from_pool(sizeof(StackType_t) * configIDLE_TASK_STACK_DEPTH);
     *stack_size = configIDLE_TASK_STACK_DEPTH;
 }
 
@@ -187,7 +183,7 @@ void vApplicationGetTimerTaskMemory(
     StaticTask_t** tcb_ptr,
     StackType_t** stack_ptr,
     uint32_t* stack_size) {
-    *tcb_ptr = &timer_task_tcb;
-    *stack_ptr = timer_task_stack;
+    *tcb_ptr = memmgr_alloc_from_pool(sizeof(StaticTask_t));
+    *stack_ptr = memmgr_alloc_from_pool(sizeof(StackType_t) * configTIMER_TASK_STACK_DEPTH);
     *stack_size = configTIMER_TASK_STACK_DEPTH;
 }

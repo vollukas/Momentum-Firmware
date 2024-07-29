@@ -7,7 +7,6 @@
 #include <core/log.h>
 #include <gui/modules/file_browser_worker.h>
 #include <flipper_application/flipper_application.h>
-#include <furi_hal.h>
 
 static void
     archive_folder_open_cb(void* context, uint32_t item_cnt, int32_t file_idx, bool is_root) {
@@ -386,7 +385,7 @@ bool archive_is_home(ArchiveBrowserView* browser) {
     }
 
     const char* default_path = archive_get_default_path(archive_get_tab(browser));
-    return (furi_string_cmp_str(browser->path, default_path) == 0);
+    return furi_string_cmp_str(browser->path, default_path) == 0;
 }
 
 const char* archive_get_name(ArchiveBrowserView* browser) {

@@ -17,7 +17,6 @@
 typedef enum {
     UsbApiEventTypeSetConfig,
     UsbApiEventTypeGetConfig,
-    UsbApiEventTypeGetConfigContext,
     UsbApiEventTypeLock,
     UsbApiEventTypeUnlock,
     UsbApiEventTypeIsLocked,
@@ -121,8 +120,7 @@ void furi_hal_usb_init(void) {
     NVIC_EnableIRQ(USB_HP_IRQn);
 
     usb.queue = furi_message_queue_alloc(1, sizeof(UsbApiEventMessage));
-    usb.thread = furi_thread_alloc_ex("UsbDriver", 1024, furi_hal_usb_thread, NULL);
-    furi_thread_mark_as_service(usb.thread);
+    usb.thread = furi_thread_alloc_service("UsbDriver", 1024, furi_hal_usb_thread, NULL);
     furi_thread_start(usb.thread);
 
     FURI_LOG_I(TAG, "Init OK");
@@ -162,21 +160,6 @@ FuriHalUsbInterface* furi_hal_usb_get_config(void) {
     UsbApiEventMessage msg = {
         .lock = api_lock_alloc_locked(),
         .type = UsbApiEventTypeGetConfig,
-        .return_data = &return_data,
-    };
-
-    furi_hal_usb_send_message(&msg);
-    return return_data.void_value;
-}
-
-void* furi_hal_usb_get_config_context(void) {
-    UsbApiEventReturnData return_data = {
-        .void_value = NULL,
-    };
-
-    UsbApiEventMessage msg = {
-        .lock = api_lock_alloc_locked(),
-        .type = UsbApiEventTypeGetConfigContext,
         .return_data = &return_data,
     };
 
@@ -426,9 +409,6 @@ static void usb_process_message(UsbApiEventMessage* message) {
         break;
     case UsbApiEventTypeGetConfig:
         message->return_data->void_value = usb.interface;
-        break;
-    case UsbApiEventTypeGetConfigContext:
-        message->return_data->void_value = usb.interface_context;
         break;
     case UsbApiEventTypeLock:
         FURI_LOG_I(TAG, "Mode lock");

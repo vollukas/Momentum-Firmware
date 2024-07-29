@@ -17,14 +17,14 @@
 
 #define TAG "AnimationManager"
 
-#define HARDCODED_ANIMATION_NAME "L1_AnimationError_128x64"
-#define NO_SD_ANIMATION_NAME "L1_NoSd_128x49"
+#define HARDCODED_ANIMATION_NAME   "L1_AnimationError_128x64"
+#define NO_SD_ANIMATION_NAME       "L1_NoSd_128x49"
 #define BAD_BATTERY_ANIMATION_NAME "L1_BadBattery_128x47"
 
-#define NO_DB_ANIMATION_NAME "L0_NoDb_128x51"
-#define BAD_SD_ANIMATION_NAME "L0_SdBad_128x51"
-#define SD_OK_ANIMATION_NAME "L0_SdOk_128x51"
-#define URL_ANIMATION_NAME "L0_Url_128x51"
+#define NO_DB_ANIMATION_NAME    "L0_NoDb_128x51"
+#define BAD_SD_ANIMATION_NAME   "L0_SdBad_128x51"
+#define SD_OK_ANIMATION_NAME    "L0_SdOk_128x51"
+#define URL_ANIMATION_NAME      "L0_Url_128x51"
 #define NEW_MAIL_ANIMATION_NAME "L0_NewMail_128x51"
 
 typedef enum {
@@ -35,11 +35,6 @@ typedef enum {
 } AnimationManagerState;
 
 struct AnimationManager {
-    bool sd_show_url;
-    bool sd_shown_no_db;
-    bool sd_shown_sd_ok;
-    bool levelup_pending;
-    bool levelup_active;
     AnimationManagerState state;
     FuriPubSubSubscription* pubsub_subscription_storage;
     FuriPubSubSubscription* pubsub_subscription_dolphin;
@@ -54,7 +49,14 @@ struct AnimationManager {
     FuriString* freezed_animation_name;
     int32_t freezed_animation_time_left;
     ViewStack* view_stack;
-    bool _dummy_mode; // Unused, kept for compatibility
+
+    bool _dummy_mode           : 1; // Unused, kept for compatibility
+    bool blocking_shown_url    : 1;
+    bool blocking_shown_sd_bad : 1;
+    bool blocking_shown_no_db  : 1;
+    bool blocking_shown_sd_ok  : 1;
+    bool levelup_pending       : 1;
+    bool levelup_active        : 1;
 };
 
 static StorageAnimation*
@@ -216,27 +218,31 @@ static bool animation_manager_check_blocking(AnimationManager* animation_manager
     FS_Error sd_status = storage_sd_status(storage);
 
     if(sd_status == FSE_INTERNAL) {
-        blocking_animation = animation_storage_find_animation(BAD_SD_ANIMATION_NAME);
-        furi_assert(blocking_animation);
+        if(!animation_manager->blocking_shown_sd_bad) {
+            blocking_animation = animation_storage_find_animation(BAD_SD_ANIMATION_NAME);
+            furi_assert(blocking_animation);
+            animation_manager->blocking_shown_sd_bad = true;
+        }
     } else if(sd_status == FSE_NOT_READY) {
-        animation_manager->sd_shown_sd_ok = false;
-        animation_manager->sd_shown_no_db = false;
+        animation_manager->blocking_shown_sd_bad = false;
+        animation_manager->blocking_shown_sd_ok = false;
+        animation_manager->blocking_shown_no_db = false;
     } else if(sd_status == FSE_OK) {
-        if(!animation_manager->sd_shown_sd_ok) {
+        if(!animation_manager->blocking_shown_sd_ok) {
             blocking_animation = animation_storage_find_animation(SD_OK_ANIMATION_NAME);
             furi_assert(blocking_animation);
-            animation_manager->sd_shown_sd_ok = true;
-        } else if(!animation_manager->sd_shown_no_db) {
+            animation_manager->blocking_shown_sd_ok = true;
+        } else if(!animation_manager->blocking_shown_no_db) {
             if(!storage_file_exists(storage, EXT_PATH("Manifest"))) {
                 blocking_animation = animation_storage_find_animation(NO_DB_ANIMATION_NAME);
                 furi_assert(blocking_animation);
-                animation_manager->sd_shown_no_db = true;
-                animation_manager->sd_show_url = true;
+                animation_manager->blocking_shown_no_db = true;
+                animation_manager->blocking_shown_url = true;
             }
-        } else if(animation_manager->sd_show_url) {
+        } else if(animation_manager->blocking_shown_url) {
             blocking_animation = animation_storage_find_animation(URL_ANIMATION_NAME);
             furi_assert(blocking_animation);
-            animation_manager->sd_show_url = false;
+            animation_manager->blocking_shown_url = false;
         }
     }
 
@@ -301,7 +307,7 @@ AnimationManager* animation_manager_alloc(void) {
         dolphin_get_pubsub(dolphin), animation_manager_check_blocking_callback, animation_manager);
     furi_record_close(RECORD_DOLPHIN);
 
-    animation_manager->sd_shown_sd_ok = true;
+    animation_manager->blocking_shown_sd_ok = true;
     if(!animation_manager_check_blocking(animation_manager)) {
         animation_manager_start_new_idle(animation_manager);
     }

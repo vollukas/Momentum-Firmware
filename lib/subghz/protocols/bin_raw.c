@@ -3,7 +3,7 @@
 #include "../blocks/const.h"
 #include "../blocks/decoder.h"
 #include "../blocks/encoder.h"
-#include "../blocks/generic.h"
+#include "../blocks/generic_i.h"
 #include "../blocks/math.h"
 #include <lib/toolbox/float_tools.h>
 #include <lib/toolbox/stream/stream.h>
@@ -14,15 +14,15 @@
 #define TAG "SubGhzProtocolBinRaw"
 
 //change very carefully, RAM ends at the most inopportune moment
-#define BIN_RAW_BUF_RAW_SIZE 2048
+#define BIN_RAW_BUF_RAW_SIZE  2048
 #define BIN_RAW_BUF_DATA_SIZE 512
 
-#define BIN_RAW_THRESHOLD_RSSI -85.0f
-#define BIN_RAW_DELTA_RSSI 7.0f
-#define BIN_RAW_SEARCH_CLASSES 20
-#define BIN_RAW_TE_MIN_COUNT 40
+#define BIN_RAW_THRESHOLD_RSSI     -85.0f
+#define BIN_RAW_DELTA_RSSI         7.0f
+#define BIN_RAW_SEARCH_CLASSES     20
+#define BIN_RAW_TE_MIN_COUNT       40
 #define BIN_RAW_BUF_MIN_DATA_COUNT 128
-#define BIN_RAW_MAX_MARKUP_COUNT 20
+#define BIN_RAW_MAX_MARKUP_COUNT   20
 
 //#define BIN_RAW_DEBUG
 
@@ -133,7 +133,7 @@ static uint16_t subghz_protocol_bin_raw_get_full_byte(uint16_t bit_count) {
     if(bit_count & 0x7) {
         return (bit_count >> 3) + 1;
     } else {
-        return (bit_count >> 3);
+        return bit_count >> 3;
     }
 }
 
@@ -985,52 +985,11 @@ SubGhzProtocolStatus subghz_protocol_decoder_bin_raw_serialize(
     furi_assert(context);
     SubGhzProtocolDecoderBinRAW* instance = context;
 
-    SubGhzProtocolStatus res = SubGhzProtocolStatusError;
-    FuriString* temp_str;
-    temp_str = furi_string_alloc();
+    SubGhzProtocolStatus res = subghz_block_generic_serialize_common(
+        instance->generic.protocol_name, flipper_format, preset);
+    if(res != SubGhzProtocolStatusOk) return res;
+    res = SubGhzProtocolStatusError;
     do {
-        stream_clean(flipper_format_get_raw_stream(flipper_format));
-        if(!flipper_format_write_header_cstr(
-               flipper_format, SUBGHZ_KEY_FILE_TYPE, SUBGHZ_KEY_FILE_VERSION)) {
-            FURI_LOG_E(TAG, "Unable to add header");
-            res = SubGhzProtocolStatusErrorParserHeader;
-            break;
-        }
-
-        if(!flipper_format_write_uint32(flipper_format, "Frequency", &preset->frequency, 1)) {
-            FURI_LOG_E(TAG, "Unable to add Frequency");
-            res = SubGhzProtocolStatusErrorParserFrequency;
-            break;
-        }
-
-        subghz_block_generic_get_preset_name(furi_string_get_cstr(preset->name), temp_str);
-        if(!flipper_format_write_string_cstr(
-               flipper_format, "Preset", furi_string_get_cstr(temp_str))) {
-            FURI_LOG_E(TAG, "Unable to add Preset");
-            res = SubGhzProtocolStatusErrorParserPreset;
-            break;
-        }
-        if(!strcmp(furi_string_get_cstr(temp_str), "FuriHalSubGhzPresetCustom")) {
-            if(!flipper_format_write_string_cstr(
-                   flipper_format, "Custom_preset_module", "CC1101")) {
-                FURI_LOG_E(TAG, "Unable to add Custom_preset_module");
-                res = SubGhzProtocolStatusErrorParserCustomPreset;
-                break;
-            }
-            if(!flipper_format_write_hex(
-                   flipper_format, "Custom_preset_data", preset->data, preset->data_size)) {
-                FURI_LOG_E(TAG, "Unable to add Custom_preset_data");
-                res = SubGhzProtocolStatusErrorParserCustomPreset;
-                break;
-            }
-        }
-        if(!flipper_format_write_string_cstr(
-               flipper_format, "Protocol", instance->generic.protocol_name)) {
-            FURI_LOG_E(TAG, "Unable to add Protocol");
-            res = SubGhzProtocolStatusErrorParserProtocolName;
-            break;
-        }
-
         uint32_t temp = instance->generic.data_count_bit;
         if(!flipper_format_write_uint32(flipper_format, "Bit", &temp, 1)) {
             FURI_LOG_E(TAG, "Unable to add Bit");
@@ -1066,7 +1025,6 @@ SubGhzProtocolStatus subghz_protocol_decoder_bin_raw_serialize(
 
         res = SubGhzProtocolStatusOk;
     } while(false);
-    furi_string_free(temp_str);
     return res;
 }
 

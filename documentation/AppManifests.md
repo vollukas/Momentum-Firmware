@@ -16,18 +16,18 @@ Only two parameters are mandatory: **appid** and **apptype**. Others are optiona
 
 - **apptype**: member of FlipperAppType.\* enumeration. Valid values are:
 
-| Enum member | Firmware component type                                                                     |
-| ----------- | ------------------------------------------------------------------------------------------- |
-| SERVICE     | System service, created at early startup                                                    |
-| SYSTEM      | Application is not being shown in any menus. It can be started by other apps or from CLI    |
-| APP         | Regular application for the main menu                                                       |
-| PLUGIN      | Application to be built as a part of the firmware and to be placed in the Plugins menu      |
-| DEBUG       | Application only visible in Debug menu with debug mode enabled                              |
-| ARCHIVE     | One and only Archive app                                                                    |
-| SETTINGS    | Application to be placed in the system settings menu                                        |
-| STARTUP     | Callback function to run at system startup. Does not define a separate app                  |
-| EXTERNAL    | Application to be built as `.fap` plugin                                                    |
-| METAPACKAGE | Does not define any code to be run, used for declaring dependencies and application bundles |
+| Enum member     | Firmware component type                                                                          |
+|:----------------|--------------------------------------------------------------------------------------------------|
+| SERVICE         | System service, created at early startup                                                         |
+| SYSTEM          | Application is not being shown in any menus. It can be started by other apps or from CLI         |
+| APP             | Regular application for the main menu                                                            |
+| PLUGIN          | Application to be built as a part of the firmware and to be placed in the Plugins menu           |
+| DEBUG           | Application only visible in Debug menu with debug mode enabled                                   |
+| ARCHIVE         | One and only Archive app                                                                         |
+| SETTINGS        | Application to be placed in the system settings menu                                             |
+| STARTUP         | Callback function to run at system startup. Does not define a separate app                       |
+| EXTERNAL        | Application to be built as `.fap` plugin                                                         |
+| METAPACKAGE     | Does not define any code to be run, used for declaring dependencies and application bundles      |
 
 - **name**: name displayed in menus.
 - **entry_point**: C function to be used as the application's entry point. Note that C++ function names are mangled, so you need to wrap them in `extern "C"` to use them as entry points.
@@ -36,14 +36,14 @@ Only two parameters are mandatory: **appid** and **apptype**. Others are optiona
 - **requires**: list of application IDs to include in the build configuration when the current application is referenced in the list of applications to build.
 - **conflicts**: list of application IDs with which the current application conflicts. If any of them is found in the constructed application list, `fbt` will abort the firmware build process.
 - **provides**: functionally identical to **_requires_** field.
-- **stack_size**: stack size in bytes to allocate for an application on its startup. Note that allocating a stack too small for an app to run will cause a system crash due to stack overflow, and allocating too much stack space will reduce usable heap memory size for apps to process data. _Note: you can use `ps` and `free` CLI commands to profile your app's memory usage._
+- **stack_size**: stack size in bytes to allocate for an application on its startup. Note that allocating a stack too small for an app to run will cause a system crash due to stack overflow, and allocating too much stack space will reduce usable heap memory size for apps to process data. _Note: you can use `top` and `free` CLI commands to profile your app's memory usage._
 - **icon**: animated icon name from built-in assets to be used when building the app as a part of the firmware.
 - **order**: order of an application within its group when sorting entries in it. The lower the order is, the closer to the start of the list the item is placed. _Used for ordering startup hooks and menu entries._
 - **sdk_headers**: list of C header files from this app's code to include in API definitions for external applications.
 - **targets**: list of strings and target names with which this application is compatible. If not specified, the application is built for all targets. The default value is `["all"]`.
 - **resources**: name of a folder within the application's source folder to be used for packacking SD card resources for this application. They will only be used if application is included in build configuration. The default value is `""`, meaning no resources are packaged.
 
-#### Parameters for external applications
+### Parameters for external applications
 
 The following parameters are used only for [FAPs](./AppsOnSDCard.md):
 
@@ -59,7 +59,10 @@ The following parameters are used only for [FAPs](./AppsOnSDCard.md):
 - **fap_extbuild**: provides support for parts of application sources to be built by external tools. Contains a list of `ExtFile(path="file name", command="shell command")` definitions. `fbt` will run the specified command for each file in the list.
 - **fal_embedded**: boolean, default `False`. Applies only to PLUGIN type. If `True`, the plugin will be embedded into host application's .fap file as a resource and extracted to `apps_assets/APPID` folder on its start. This allows plugins to be distributed as a part of the host application.
 
-Note that commands are executed at the firmware root folder, and all intermediate files must be placed in an application's temporary build folder. For that, you can use pattern expansion by `fbt`: `${FAP_WORK_DIR}` will be replaced with the path to the application's temporary build folder, and `${FAP_SRC_DIR}` will be replaced with the path to the application's source folder. You can also use other variables defined internally by `fbt`.
+> [!NOTE] 
+> These commands are executed at the firmware root folder, and all intermediate files must be placed in an application's temporary build folder. 
+> For that, you can use pattern expansion by `fbt`: `${FAP_WORK_DIR}` will be replaced with the path to the application's temporary build folder, 
+> and `${FAP_SRC_DIR}` will be replaced with the path to the application's source folder. You can also use other variables defined internally by `fbt`.
 
 Example for building an app from Rust sources:
 
