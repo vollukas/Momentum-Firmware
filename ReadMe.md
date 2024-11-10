@@ -1,10 +1,10 @@
 <p align="center">
   <img src=".github/assets/logo.png" alt="Momentum Firmware">
   <h2 align="center">With 5 passport icons: Angry, Lonely, Okay, Happy, Awesome</h2>
-  <h2 align="center">With added <b>better-pet</b> asset pack</h2>
+  <h2 align="center">With added **better-pet** asset pack</h2>
   <h2 align="center"> - Many vanilla-friendly(dolphin) animations, every level unlocks at least 1 new animation</h2>
   <br/>
-  <h2 align="center">USE <b>BETTER-PET</b> BRANCH. Dev branch is without any changes and I use it just to merge new updates from momentum</h2>
+  <h2 align="center">USE **BETTER-PET** BRANCH. Dev branch is without any changes and I use it just to merge new updates from momentum</h2>
 </p>
 
 <h2 align="center">
