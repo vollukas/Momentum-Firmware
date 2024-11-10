@@ -20,7 +20,6 @@ static FindMy* findmy_app_alloc() {
     app->dialogs = furi_record_open(RECORD_DIALOGS);
 
     app->view_dispatcher = view_dispatcher_alloc();
-    view_dispatcher_enable_queue(app->view_dispatcher);
 
     app->scene_manager = scene_manager_alloc(&findmy_scene_handlers, app);
 
@@ -132,7 +131,7 @@ void findmy_set_tag_type(FindMy* app, FindMyType type) {
     findmy_main_update_type(app->findmy_main, type);
 }
 
-void furi_hal_bt_reverse_mac_addr(uint8_t mac_addr[GAP_MAC_ADDR_SIZE]) {
+void reverse_mac_addr(uint8_t mac_addr[GAP_MAC_ADDR_SIZE]) {
     uint8_t tmp;
     for(size_t i = 0; i < GAP_MAC_ADDR_SIZE / 2; i++) {
         tmp = mac_addr[i];

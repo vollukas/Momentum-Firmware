@@ -8,6 +8,8 @@ void test_furi_concurrent_access(void);
 void test_furi_pubsub(void);
 void test_furi_memmgr(void);
 void test_furi_event_loop(void);
+void test_errno_saving(void);
+void test_furi_primitives(void);
 
 static int foo = 0;
 
@@ -42,6 +44,14 @@ MU_TEST(mu_test_furi_event_loop) {
     test_furi_event_loop();
 }
 
+MU_TEST(mu_test_errno_saving) {
+    test_errno_saving();
+}
+
+MU_TEST(mu_test_furi_primitives) {
+    test_furi_primitives();
+}
+
 MU_TEST_SUITE(test_suite) {
     MU_SUITE_CONFIGURE(&test_setup, &test_teardown);
     MU_RUN_TEST(test_check);
@@ -51,6 +61,8 @@ MU_TEST_SUITE(test_suite) {
     MU_RUN_TEST(mu_test_furi_pubsub);
     MU_RUN_TEST(mu_test_furi_memmgr);
     MU_RUN_TEST(mu_test_furi_event_loop);
+    MU_RUN_TEST(mu_test_errno_saving);
+    MU_RUN_TEST(mu_test_furi_primitives);
 }
 
 int run_minunit_test_furi(void) {

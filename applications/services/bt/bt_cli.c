@@ -4,8 +4,8 @@
 #include <lib/toolbox/args.h>
 
 #include <ble/ble.h>
-#include "bt_settings.h"
-#include "bt_service/bt_i.h"
+#include "bt_service/bt.h"
+#include "bt_service/bt_settings_api_i.h"
 #include <profiles/serial_profile.h>
 
 static void bt_cli_command_hci_info(Cli* cli, FuriString* args, void* context) {
@@ -185,6 +185,8 @@ static void bt_cli(Cli* cli, FuriString* args, void* context) {
 
     FuriString* cmd;
     cmd = furi_string_alloc();
+    BtSettings bt_settings;
+    bt_get_settings(bt, &bt_settings);
 
     do {
         if(!args_read_string_and_trim(args, cmd)) {
@@ -217,7 +219,7 @@ static void bt_cli(Cli* cli, FuriString* args, void* context) {
         bt_cli_print_usage();
     } while(false);
 
-    if(bt->bt_settings.enabled) {
+    if(bt_settings.enabled) {
         furi_hal_bt_start_advertising();
     }
 
@@ -225,15 +227,15 @@ static void bt_cli(Cli* cli, FuriString* args, void* context) {
     furi_record_close(RECORD_BT);
 }
 
-#include <flipper_application/flipper_application.h>
 #include <cli/cli_i.h>
+CLI_PLUGIN_WRAPPER("bt", bt_cli)
 
-static const FlipperAppPluginDescriptor plugin_descriptor = {
-    .appid = CLI_PLUGIN_APP_ID,
-    .ep_api_version = CLI_PLUGIN_API_VERSION,
-    .entry_point = &bt_cli,
-};
-
-const FlipperAppPluginDescriptor* bt_cli_plugin_ep(void) {
-    return &plugin_descriptor;
+void bt_on_system_start(void) {
+#ifdef SRV_CLI
+    Cli* cli = furi_record_open(RECORD_CLI);
+    cli_add_command(cli, RECORD_BT, CliCommandFlagDefault, bt_cli_wrapper, NULL);
+    furi_record_close(RECORD_CLI);
+#else
+    UNUSED(bt_cli);
+#endif
 }

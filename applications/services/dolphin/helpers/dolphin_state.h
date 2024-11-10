@@ -1,21 +1,20 @@
 #pragma once
 
-#include "dolphin_deed.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define DOLPHIN_STATE_PATH CFG_PATH("dolphin.state")
+#include "dolphin_deed.h"
 
 extern const uint32_t DOLPHIN_LEVELS[];
 extern const size_t DOLPHIN_LEVEL_COUNT;
 
 #define BUTTHURT_MAX 14
 #define BUTTHURT_MIN 0
+
+typedef enum {
+    DolphinFlagHappyMode = 1,
+} DolphinFlags;
 
 typedef struct DolphinState DolphinState;
 typedef struct {
@@ -37,9 +36,9 @@ DolphinState* dolphin_state_alloc(void);
 
 void dolphin_state_free(DolphinState* dolphin_state);
 
-bool dolphin_state_save(DolphinState* dolphin_state);
+void dolphin_state_save(DolphinState* dolphin_state);
 
-bool dolphin_state_load(DolphinState* dolphin_state);
+void dolphin_state_load(DolphinState* dolphin_state);
 
 void dolphin_state_clear_limits(DolphinState* dolphin_state);
 
@@ -58,7 +57,3 @@ bool dolphin_state_is_levelup(uint32_t icounter);
 void dolphin_state_increase_level(DolphinState* dolphin_state);
 
 uint8_t dolphin_get_level(uint32_t icounter);
-
-#ifdef __cplusplus
-}
-#endif

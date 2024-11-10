@@ -507,13 +507,13 @@ FS_Error storage_common_rename(Storage* storage, const char* old_path, const cha
             }
 
             // Cannot rename a directory to itself or to a nested directory
-            if(storage_common_equivalent_path(storage, old_path, new_path, true)) {
+            if(storage_common_is_subdir(storage, old_path, new_path)) {
                 error = FSE_INVALID_NAME;
                 break;
             }
 
             // Renaming a regular file to itself does nothing and always succeeds
-        } else if(storage_common_equivalent_path(storage, old_path, new_path, false)) {
+        } else if(storage_common_equivalent_path(storage, old_path, new_path)) {
             error = FSE_OK;
             break;
         }
@@ -567,13 +567,13 @@ FS_Error storage_common_rename_safe(Storage* storage, const char* old_path, cons
 
         if(storage_dir_exists(storage, old_path)) {
             // Cannot rename a directory to itself or to a nested directory
-            if(storage_common_equivalent_path(storage, old_path, new_path, true)) {
+            if(storage_common_is_subdir(storage, old_path, new_path)) {
                 error = FSE_INVALID_NAME;
                 break;
             }
 
             // Renaming a regular file to itself does nothing and always succeeds
-        } else if(storage_common_equivalent_path(storage, old_path, new_path, false)) {
+        } else if(storage_common_equivalent_path(storage, old_path, new_path)) {
             error = FSE_OK;
             break;
         }
@@ -608,7 +608,7 @@ FS_Error storage_common_rename_safe(Storage* storage, const char* old_path, cons
 
 static FS_Error
     storage_copy_recursive(Storage* storage, const char* old_path, const char* new_path) {
-    if(storage_common_equivalent_path(storage, old_path, new_path, true)) {
+    if(storage_common_is_subdir(storage, old_path, new_path)) {
         return FSE_INVALID_NAME;
     }
 
@@ -927,11 +927,11 @@ bool storage_common_exists(Storage* storage, const char* path) {
     return storage_common_stat(storage, path, &file_info) == FSE_OK;
 }
 
-bool storage_common_equivalent_path(
+static bool storage_internal_equivalent_path(
     Storage* storage,
     const char* path1,
     const char* path2,
-    bool truncate) {
+    bool check_subdir) {
     furi_check(storage);
 
     S_API_PROLOGUE;
@@ -940,7 +940,7 @@ bool storage_common_equivalent_path(
         .cequivpath = {
             .path1 = path1,
             .path2 = path2,
-            .truncate = truncate,
+            .check_subdir = check_subdir,
             .thread_id = furi_thread_get_current_id(),
         }};
 
@@ -948,6 +948,14 @@ bool storage_common_equivalent_path(
     S_API_EPILOGUE;
 
     return S_RETURN_BOOL;
+}
+
+bool storage_common_equivalent_path(Storage* storage, const char* path1, const char* path2) {
+    return storage_internal_equivalent_path(storage, path1, path2, false);
+}
+
+bool storage_common_is_subdir(Storage* storage, const char* parent, const char* child) {
+    return storage_internal_equivalent_path(storage, parent, child, true);
 }
 
 /****************** ERROR ******************/
@@ -1037,7 +1045,16 @@ FS_Error storage_virtual_init(Storage* storage, File* image) {
         }};
     S_API_MESSAGE(StorageCommandVirtualInit);
     S_API_EPILOGUE;
-    return S_RETURN_ERROR;
+    FS_Error error = S_RETURN_ERROR;
+
+    FURI_LOG_T(
+        TAG,
+        "VirtualInit %p - %p %s",
+        (void*)((uint32_t)image - SRAM_BASE),
+        (void*)(image->file_id - SRAM_BASE),
+        storage_error_get_desc(error));
+
+    return error;
 }
 
 FS_Error storage_virtual_format(Storage* storage) {
@@ -1047,7 +1064,11 @@ FS_Error storage_virtual_format(Storage* storage) {
     SAData data = {};
     S_API_MESSAGE(StorageCommandVirtualFormat);
     S_API_EPILOGUE;
-    return S_RETURN_ERROR;
+    FS_Error error = S_RETURN_ERROR;
+
+    FURI_LOG_T(TAG, "VirtualFormat %s", storage_error_get_desc(error));
+
+    return error;
 }
 
 FS_Error storage_virtual_mount(Storage* storage) {
@@ -1057,7 +1078,11 @@ FS_Error storage_virtual_mount(Storage* storage) {
     SAData data = {};
     S_API_MESSAGE(StorageCommandVirtualMount);
     S_API_EPILOGUE;
-    return S_RETURN_ERROR;
+    FS_Error error = S_RETURN_ERROR;
+
+    FURI_LOG_T(TAG, "VirtualMount %s", storage_error_get_desc(error));
+
+    return error;
 }
 
 FS_Error storage_virtual_unmount(Storage* storage) {
@@ -1067,7 +1092,11 @@ FS_Error storage_virtual_unmount(Storage* storage) {
     SAData data = {};
     S_API_MESSAGE(StorageCommandVirtualUnmount);
     S_API_EPILOGUE;
-    return S_RETURN_ERROR;
+    FS_Error error = S_RETURN_ERROR;
+
+    FURI_LOG_T(TAG, "VirtualUnmount %s", storage_error_get_desc(error));
+
+    return error;
 }
 
 FS_Error storage_virtual_quit(Storage* storage) {
@@ -1077,7 +1106,11 @@ FS_Error storage_virtual_quit(Storage* storage) {
     SAData data = {};
     S_API_MESSAGE(StorageCommandVirtualQuit);
     S_API_EPILOGUE;
-    return S_RETURN_ERROR;
+    FS_Error error = S_RETURN_ERROR;
+
+    FURI_LOG_T(TAG, "VirtualQuit %s", storage_error_get_desc(error));
+
+    return error;
 }
 
 File* storage_file_alloc(Storage* storage) {

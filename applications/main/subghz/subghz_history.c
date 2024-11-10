@@ -193,8 +193,9 @@ FlipperFormat* subghz_history_get_raw_data(SubGhzHistory* instance, uint16_t idx
 bool subghz_history_get_text_space_left(
     SubGhzHistory* instance,
     FuriString* output,
-    uint8_t sats,
-    bool ignore_full) {
+    bool ignore_full,
+    bool show_sats,
+    uint8_t sats) {
     furi_assert(instance);
     if(!ignore_full) {
         if(memmgr_get_free_heap() < SUBGHZ_HISTORY_FREE_HEAP) {
@@ -207,14 +208,10 @@ bool subghz_history_get_text_space_left(
         }
     }
     if(output != NULL) {
-        if(sats == 0) {
-            furi_string_printf(output, "%02u", instance->last_index_write);
+        if(show_sats) {
+            furi_string_printf(output, "%d", sats);
         } else {
-            if(furi_hal_rtc_get_timestamp() % 2) {
-                furi_string_printf(output, "%02u", instance->last_index_write);
-            } else {
-                furi_string_printf(output, "%d sats", sats);
-            }
+            furi_string_printf(output, "%02u", instance->last_index_write);
         }
     }
     return false;
@@ -269,6 +266,11 @@ bool subghz_history_add_to_history(
     SubGhzHistoryItem* item = SubGhzHistoryItemArray_push_raw(instance->history->data);
     item->preset = malloc(sizeof(SubGhzRadioPreset));
     item->type = decoder_base->protocol->type;
+    if(decoder_base->protocol->filter & SubGhzProtocolFilter_Weather) {
+        // Other code uses protocol type to check if signal is usable
+        // so we can't change the actual protocol type, we fake it here
+        item->type = SubGhzProtocolWeatherStation;
+    }
     item->preset->frequency = preset->frequency;
     item->preset->name = furi_string_alloc();
     furi_string_set(item->preset->name, preset->name);

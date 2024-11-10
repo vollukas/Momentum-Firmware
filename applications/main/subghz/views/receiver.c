@@ -38,6 +38,7 @@ static const Icon* ReceiverItemIcons[] = {
     [SubGhzProtocolTypeUnknown] = &I_Quest_7x8,
     [SubGhzProtocolTypeStatic] = &I_Static_9x7,
     [SubGhzProtocolTypeDynamic] = &I_Dynamic_9x7,
+    [SubGhzProtocolWeatherStation] = &I_Weather_7x8,
     [SubGhzProtocolTypeBinRAW] = &I_Raw_9x7,
 };
 
@@ -65,6 +66,7 @@ typedef struct {
     FuriString* progress_str;
     bool hopping_enabled;
     bool bin_raw_enabled;
+    bool show_sats;
     SubGhzRepeaterState repeater_state;
     SubGhzReceiverHistory* history;
     uint16_t idx;
@@ -209,6 +211,7 @@ void subghz_view_receiver_add_data_statusbar(
     const char* history_stat_str,
     bool hopping_enabled,
     bool bin_raw_enabled,
+    bool show_sats,
     SubGhzRepeaterState repeater_state) {
     furi_assert(subghz_receiver);
     with_view_model(
@@ -220,6 +223,7 @@ void subghz_view_receiver_add_data_statusbar(
             furi_string_set(model->history_stat_str, history_stat_str);
             model->hopping_enabled = hopping_enabled;
             model->bin_raw_enabled = bin_raw_enabled;
+            model->show_sats = show_sats;
             model->repeater_state = repeater_state;
         },
         true);
@@ -407,7 +411,11 @@ void subghz_view_receiver_draw(Canvas* canvas, SubGhzViewReceiverModel* model) {
                 AlignRight,
                 AlignBottom,
                 furi_string_get_cstr(model->history_stat_str));
-            canvas_draw_icon(canvas, 116, 53, &I_sub1_10px);
+            if(model->show_sats) {
+                canvas_draw_icon(canvas, 118, 54, &I_Sats_6x9);
+            } else {
+                canvas_draw_icon(canvas, 116, 53, &I_sub1_10px);
+            }
         }
         canvas_set_font(canvas, FontSecondary);
         elements_bold_rounded_frame(canvas, 14, 8, 99, 48);
@@ -452,7 +460,11 @@ void subghz_view_receiver_draw(Canvas* canvas, SubGhzViewReceiverModel* model) {
                 AlignRight,
                 AlignBottom,
                 furi_string_get_cstr(model->history_stat_str));
-            canvas_draw_icon(canvas, 116, 53, &I_sub1_10px);
+            if(model->show_sats) {
+                canvas_draw_icon(canvas, 118, 54, &I_Sats_6x9);
+            } else {
+                canvas_draw_icon(canvas, 116, 53, &I_sub1_10px);
+            }
         }
     } break;
     }

@@ -69,7 +69,6 @@ static JsApp* js_app_alloc(void) {
     app->loading = loading_alloc();
 
     app->gui = furi_record_open("gui");
-    view_dispatcher_enable_queue(app->view_dispatcher);
     view_dispatcher_attach_to_gui(app->view_dispatcher, app->gui, ViewDispatcherTypeFullscreen);
     view_dispatcher_add_view(
         app->view_dispatcher, JsAppViewLoading, loading_get_view(app->loading));
@@ -115,7 +114,7 @@ int32_t js_app(void* arg) {
         FuriString* start_text =
             furi_string_alloc_printf("Running %s", furi_string_get_cstr(name));
         console_view_print(app->console_view, furi_string_get_cstr(start_text));
-        console_view_print(app->console_view, "------------");
+        console_view_print(app->console_view, "-------------");
         furi_string_free(name);
         furi_string_free(start_text);
 
@@ -205,15 +204,13 @@ void js_cli_execute(Cli* cli, FuriString* args, void* context) {
     furi_record_close(RECORD_STORAGE);
 }
 
-#include <flipper_application/flipper_application.h>
 #include <cli/cli_i.h>
+CLI_PLUGIN_WRAPPER("js", js_cli_execute)
 
-static const FlipperAppPluginDescriptor plugin_descriptor = {
-    .appid = CLI_PLUGIN_APP_ID,
-    .ep_api_version = CLI_PLUGIN_API_VERSION,
-    .entry_point = &js_cli_execute,
-};
-
-const FlipperAppPluginDescriptor* js_cli_plugin_ep(void) {
-    return &plugin_descriptor;
+void js_app_on_system_start(void) {
+#ifdef SRV_CLI
+    Cli* cli = furi_record_open(RECORD_CLI);
+    cli_add_command(cli, "js", CliCommandFlagDefault, js_cli_execute_wrapper, NULL);
+    furi_record_close(RECORD_CLI);
+#endif
 }

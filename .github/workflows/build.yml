@@ -63,9 +63,6 @@ jobs:
           fi
 
       - name: "Check API version for consistency with OFW release-candidate"
-        env:
-          INDEXER_URL: ${{ secrets.INDEXER_URL }}
-        if: ${{ env.INDEXER_URL != '' && github.event_name == 'push' && ((github.ref_name == 'dev' && !contains(github.event.head_commit.message, '--nobuild')) || startsWith(github.ref, 'refs/tags/')) }}
         run: |
           set -e
           symbols="targets/$TARGET/api_symbols.csv"
@@ -82,7 +79,7 @@ jobs:
       - name: "Build the firmware and apps"
         id: build-fw
         run: |
-          ./fbt TARGET_HW=$TARGET_HW $FBT_BUILD_TYPE updater_package
+          ./fbt TARGET_HW=$TARGET_HW $FBT_BUILD_TYPE copro_dist updater_package fap_dist
           echo "firmware_api=$(./fbt TARGET_HW=$TARGET_HW get_apiversion)" >> $GITHUB_OUTPUT
 
       - name: "Check for uncommitted changes"
@@ -104,13 +101,48 @@ jobs:
           set -e
           rm -rf artifacts || true
           mkdir artifacts
-          cp dist/${TARGET}-*/flipper-z-${TARGET}-{update,sdk}-* artifacts/
+          cp dist/${TARGET}-*/flipper-z-${TARGET}-{update-*.tgz,sdk-*.zip,full-*.dfu} artifacts/
+          tar czpf "artifacts/flipper-z-${TARGET}-resources-${SUFFIX}.tgz" \
+            -C build/latest resources
           cd dist/${TARGET}-*/${TARGET}-update-*/
           ARTIFACT_TAG=flipper-z-"$(basename "$(realpath .)")"
           7z a ../../../artifacts/${ARTIFACT_TAG}.zip .
           echo "ARTIFACT_TAG=$ARTIFACT_TAG" >> $GITHUB_ENV
           VERSION_TAG="$(basename "$(realpath .)" | cut -d- -f3-)"
           echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_ENV
+
+      - name: "Copy universal artifacts"
+        env:
+          INDEXER_URL: ${{ secrets.INDEXER_URL }}
+        if: ${{ env.INDEXER_URL != '' && (github.event.pull_request || (github.event_name == 'push' && ((github.ref_name == 'dev' && !contains(github.event.head_commit.message, '--nobuild')) || startsWith(github.ref, 'refs/tags/')))) }}
+        run: |
+          tar czpf "artifacts/flipper-z-any-scripts-${SUFFIX}.tgz" scripts
+          cp build/core2_firmware.tgz "artifacts/flipper-z-any-core2_firmware-${SUFFIX}.tgz"
+
+      - name: "Calculate DFU sizes"
+        env:
+          INDEXER_URL: ${{ secrets.INDEXER_URL }}
+        if: ${{ env.INDEXER_URL != '' && github.event.pull_request && matrix.target == env.DEFAULT_TARGET }}
+        run: |
+          curl -L "${{ secrets.INDEXER_URL }}"/firmware/development/f7/full_dfu -o dev.dfu
+          dfu_size_new=$(du --apparent-size -B 1 artifacts/flipper-z-${TARGET}-full-*.dfu | cut -f1)
+          dfu_size_dev=$(du --apparent-size -B 1 dev.dfu | cut -f1)
+          dfu_size_diff=$((dfu_size_new - dfu_size_dev))
+          DFU_SIZE=$(echo $dfu_size_new | numfmt --to=iec-i --format=%.2fB | sed 's/.00B$/B/')
+          DFU_DIFF=$(echo $dfu_size_diff | numfmt --to=iec-i --format=%.2fB | sed 's/.00B$/B/' | sed -r 's/^([^-])/+\1/')
+          echo "DFU_SIZE=$DFU_SIZE" >> $GITHUB_ENV
+          echo "DFU_DIFF=$DFU_DIFF" >> $GITHUB_ENV
+
+          tar xzf build/core2_firmware.tgz
+          radio_addr=$(jq -r '.copro.radio.files[0].address' core2_firmware/Manifest.json)
+          flash_base=0x8000000
+          min_gap=$((2 * 4 * 1024))
+          flash_free_total=$((radio_addr - flash_base - dfu_size_new))
+          flash_free_usable=$((flash_free_total - min_gap))
+          FLASH_FREE=$(echo $flash_free_total | numfmt --to=iec-i --format=%.2fB | sed 's/.00B$/B/')
+          FLASH_USABLE=$(echo $flash_free_usable | numfmt --to=iec-i --format=%.2fB | sed 's/.00B$/B/')
+          echo "FLASH_FREE=$FLASH_FREE" >> $GITHUB_ENV
+          echo "FLASH_USABLE=$FLASH_USABLE" >> $GITHUB_ENV
 
       - name: "Upload artifacts to update server"
         env:
@@ -125,7 +157,7 @@ jobs:
               ${FILES[@]} \
               "${{ secrets.INDEXER_URL }}"/firmware/uploadfiles
 
-      - name: 'Find previous comment'
+      - name: "Find previous comment"
         env:
           INDEXER_URL: ${{ secrets.INDEXER_URL }}
         if: ${{ env.INDEXER_URL != '' && github.event.pull_request && matrix.target == env.DEFAULT_TARGET }}
@@ -133,10 +165,10 @@ jobs:
         id: find-comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: 'Compiled ${{ matrix.target }} firmware for commit'
+          comment-author: "github-actions[bot]"
+          body-includes: "Compiled ${{ matrix.target }} firmware for commit"
 
-      - name: 'Create or update comment'
+      - name: "Create or update comment"
         env:
           INDEXER_URL: ${{ secrets.INDEXER_URL }}
         if: ${{ env.INDEXER_URL != '' && github.event.pull_request && matrix.target == env.DEFAULT_TARGET }}
@@ -146,8 +178,10 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             **Compiled ${{ matrix.target }} firmware for commit `${{steps.names.outputs.commit_sha}}`:**
-            - [☁️ Flipper Lab/App](https://lab.flipper.net/?url=${{secrets.INDEXER_URL}}/firmware/${{steps.names.outputs.branch_name}}/flipper-z-${{steps.names.outputs.default_target}}-update-${{steps.names.outputs.suffix}}.tgz&channel=mntm-${{steps.names.outputs.branch_name}}&version=${{steps.names.outputs.commit_sha}})
-            - [📦 qFlipper Package](${{secrets.INDEXER_URL}}/firmware/${{steps.names.outputs.branch_name}}/flipper-z-${{steps.names.outputs.default_target}}-update-${{steps.names.outputs.suffix}}.tgz)
+            - [☁️ Flipper Lab/App](https://lab.flipper.net/?url=${{secrets.INDEXER_URL}}/builds/firmware/${{steps.names.outputs.branch_name}}/flipper-z-${{steps.names.outputs.default_target}}-update-${{steps.names.outputs.suffix}}.tgz&channel=mntm-${{steps.names.outputs.branch_name}}&version=${{steps.names.outputs.commit_sha}})
+            - [📦 qFlipper Package](${{secrets.INDEXER_URL}}/builds/firmware/${{steps.names.outputs.branch_name}}/flipper-z-${{steps.names.outputs.default_target}}-update-${{steps.names.outputs.suffix}}.tgz)
+            - DFU Size: `${{ env.DFU_SIZE }}` (`${{ env.DFU_DIFF }}` from dev)
+            - Free Flash: `${{ env.FLASH_FREE }}` (`${{ env.FLASH_USABLE }}` usable)
           edit-mode: replace
 
       - name: Send devbuild webhook

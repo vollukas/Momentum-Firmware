@@ -4,6 +4,7 @@
 #include <gui/gui.h>
 #include <input/input.h>
 #include <lib/toolbox/args.h>
+#include <lib/toolbox/strint.h>
 #include <furi_hal_usb_hid.h>
 #include "ble_hid.h"
 #include <storage/storage.h>
@@ -99,7 +100,7 @@ uint16_t ducky_get_keycode(BadKbScript* bad_kb, const char* param, bool accept_c
 
 bool ducky_get_number(const char* param, uint32_t* val) {
     uint32_t value = 0;
-    if(sscanf(param, "%lu", &value) == 1) {
+    if(strint_to_uint32(param, NULL, &value, 10) == StrintParseNoError) {
         *val = value;
         return true;
     }
@@ -341,7 +342,7 @@ static bool ducky_set_bt_id(BadKbScript* bad_kb, const char* line) {
             return false;
         }
     }
-    furi_hal_bt_reverse_mac_addr(cfg->ble.mac);
+    reverse_mac_addr(cfg->ble.mac);
 
     strlcpy(cfg->ble.name, line + mac_len, sizeof(cfg->ble.name));
     FURI_LOG_D(WORKER_TAG, "set bt id: %s", line);

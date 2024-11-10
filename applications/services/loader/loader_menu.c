@@ -4,9 +4,11 @@
 #include <gui/modules/submenu.h>
 #include <assets_icons.h>
 #include <applications.h>
+#include <toolbox/run_parallel.h>
 
 #include "loader.h"
 #include "loader_menu.h"
+#include "loader_menu_storage_i.h"
 
 #include <flipper_application/flipper_application.h>
 #include <toolbox/stream/file_stream.h>
@@ -63,13 +65,6 @@ static void loader_pubsub_callback(const void* message, void* context) {
     }
 }
 
-static void loader_menu_set_view(LoaderMenu* loader_menu, View* view) {
-    view_holder_set_view(loader_menu->view_holder, view);
-    if(view) {
-        view_holder_update(view, loader_menu->view_holder);
-    }
-}
-
 static void loader_menu_dummy_draw(Canvas* canvas, void* context) {
     UNUSED(context);
 
@@ -101,8 +96,7 @@ LoaderMenu* loader_menu_alloc(void (*closed_cb)(void*), void* context, bool sett
     loader_menu->view_holder = view_holder_alloc();
     view_holder_attach_to_gui(loader_menu->view_holder, gui);
     view_holder_set_back_callback(loader_menu->view_holder, NULL, NULL);
-    loader_menu_set_view(loader_menu, loader_menu->dummy);
-    view_holder_start(loader_menu->view_holder);
+    view_holder_set_view(loader_menu->view_holder, loader_menu->dummy);
 
     loader_menu->loader = furi_record_open(RECORD_LOADER);
     loader_menu->subscription = furi_pubsub_subscribe(
@@ -124,6 +118,7 @@ void loader_menu_free(LoaderMenu* loader_menu) {
         furi_thread_free(loader_menu->thread);
     }
 
+    view_holder_set_view(loader_menu->view_holder, NULL);
     view_holder_free(loader_menu->view_holder);
     furi_record_close(RECORD_GUI);
 
@@ -178,13 +173,36 @@ static void loader_menu_applications_callback(void* context, uint32_t index) {
 static void loader_menu_settings_menu_callback(void* context, uint32_t index) {
     UNUSED(context);
     const char* name = FLIPPER_SETTINGS_APPS[index].name;
+
+    // Workaround for SD format when app can't be opened
+    if(!strcmp(name, "Storage")) {
+        Storage* storage = furi_record_open(RECORD_STORAGE);
+        FS_Error status = storage_sd_status(storage);
+        furi_record_close(RECORD_STORAGE);
+        // If SD card not ready, cannot be formatted, so we want loader to give
+        // normal error message, with function below
+        if(status != FSE_NOT_READY) {
+            // Attempt to launch the app, and if failed offer to format SD card
+            run_parallel(loader_menu_storage_settings, storage, 512);
+            return;
+        }
+    }
+
     loader_menu_start(name);
+}
+
+// Can't do this in GUI callbacks because now ViewHolder waits for ongoing
+// input, and inputs are not processed because GUI is processing callbacks
+static void loader_menu_set_view_pending(void* context, uint32_t arg) {
+    LoaderMenuApp* app = context;
+    view_holder_set_view(app->loader_menu->view_holder, (View*)arg);
 }
 
 static void loader_menu_switch_to_settings(void* context, uint32_t index) {
     UNUSED(index);
     LoaderMenuApp* app = context;
-    loader_menu_set_view(app->loader_menu, submenu_get_view(app->settings_menu));
+    furi_timer_pending_callback(
+        loader_menu_set_view_pending, app, (uint32_t)submenu_get_view(app->settings_menu));
     app->loader_menu->current_view = LoaderMenuViewSettings;
 }
 
@@ -192,7 +210,8 @@ static void loader_menu_back(void* context) {
     LoaderMenuApp* app = context;
     if(app->loader_menu->current_view == LoaderMenuViewSettings &&
        !app->loader_menu->settings_only) {
-        loader_menu_set_view(app->loader_menu, menu_get_view(app->primary_menu));
+        furi_timer_pending_callback(
+            loader_menu_set_view_pending, app, (uint32_t)menu_get_view(app->primary_menu));
         app->loader_menu->current_view = LoaderMenuViewPrimary;
     } else {
         furi_thread_flags_set(furi_thread_get_id(app->loader_menu->thread), 0);
@@ -296,6 +315,8 @@ static void loader_menu_build_menu(LoaderMenuApp* app, LoaderMenu* menu) {
                     furi_string_set(line, "125 kHz RFID");
                 } else if(furi_string_equal(line, "SubGHz")) {
                     furi_string_set(line, "Sub-GHz");
+                } else if(furi_string_equal(line, "Xtreme")) {
+                    furi_string_set(line, "Momentum");
                 }
             }
             loader_menu_find_add_app(app, storage, line);
@@ -363,7 +384,7 @@ static LoaderMenuApp* loader_menu_app_alloc(LoaderMenu* loader_menu) {
     View* view = app->loader_menu->current_view == LoaderMenuViewSettings ?
                      submenu_get_view(app->settings_menu) :
                      menu_get_view(app->primary_menu);
-    loader_menu_set_view(app->loader_menu, view);
+    view_holder_set_view(app->loader_menu->view_holder, view);
     view_holder_set_back_callback(app->loader_menu->view_holder, loader_menu_back, app);
 
     return app;
@@ -371,7 +392,7 @@ static LoaderMenuApp* loader_menu_app_alloc(LoaderMenu* loader_menu) {
 
 static void loader_menu_app_free(LoaderMenuApp* app) {
     view_holder_set_back_callback(app->loader_menu->view_holder, NULL, NULL);
-    loader_menu_set_view(app->loader_menu, app->loader_menu->dummy);
+    view_holder_set_view(app->loader_menu->view_holder, app->loader_menu->dummy);
 
     if(!app->loader_menu->settings_only) {
         app->loader_menu->selected_primary = menu_get_selected_item(app->primary_menu);

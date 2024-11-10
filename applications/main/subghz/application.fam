@@ -16,6 +16,7 @@ App(
     #     "!helpers/subghz_chat.c",
     #     "!subghz_extended_freq.c",
     # ],
+    requires=["region"],
     resources="resources",
     fap_libs=["hwdrivers"],
     fap_icon="icon.png",
@@ -47,7 +48,7 @@ App(
     appid="subghz_cli",
     targets=["f7"],
     apptype=FlipperAppType.PLUGIN,
-    entry_point="subghz_cli_plugin_ep",
+    entry_point="subghz_cli_command_plugin_ep",
     requires=["cli"],
     sources=["subghz_cli.c", "helpers/subghz_chat.c"],
 )
@@ -58,7 +59,7 @@ App(
     targets=["f7"],
     apptype=FlipperAppType.STARTUP,
     entry_point="subghz_on_system_start",
-    # sources=["subghz_start.c"],
+    # sources=["subghz_cli.c"],
     order=40,
 )
 

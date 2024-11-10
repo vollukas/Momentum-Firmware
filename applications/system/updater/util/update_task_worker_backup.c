@@ -7,13 +7,13 @@
 #include <desktop/views/desktop_view_slideshow.h>
 #include <toolbox/path.h>
 #include <update_util/dfu_file.h>
-#include <update_util/lfs_backup.h>
+#include <update_util/int_backup.h>
 #include <update_util/update_operation.h>
 #include <update_util/resources/manifest.h>
 #include <toolbox/tar/tar_archive.h>
 #include <toolbox/crc32_calc.h>
 
-#define FIRSTBOOT_FLAG_PATH CFG_PATH("momentum_firstboot.flag")
+#define FIRSTBOOT_FLAG_PATH INT_PATH(".momentum_firstboot.flag")
 
 #define TAG "UpdWorkerBackup"
 
@@ -23,14 +23,14 @@ static bool update_task_pre_update(UpdateTask* update_task) {
     backup_file_path = furi_string_alloc();
     path_concat(
         furi_string_get_cstr(update_task->update_path),
-        LFS_BACKUP_DEFAULT_FILENAME,
+        INT_BACKUP_DEFAULT_FILENAME,
         backup_file_path);
 
-    update_task_set_progress(update_task, UpdateTaskStageLfsBackup, 0);
+    update_task_set_progress(update_task, UpdateTaskStageIntBackup, 0);
     /* to avoid bootloops */
     furi_hal_rtc_set_boot_mode(FuriHalRtcBootModeNormal);
     if((success =
-            lfs_backup_create(update_task->storage, furi_string_get_cstr(backup_file_path)))) {
+            int_backup_create(update_task->storage, furi_string_get_cstr(backup_file_path)))) {
         furi_hal_rtc_set_boot_mode(FuriHalRtcBootModeUpdate);
     }
 
@@ -131,12 +131,12 @@ static bool update_task_post_update(UpdateTask* update_task) {
     do {
         path_concat(
             furi_string_get_cstr(update_task->update_path),
-            LFS_BACKUP_DEFAULT_FILENAME,
+            INT_BACKUP_DEFAULT_FILENAME,
             file_path);
 
-        update_task_set_progress(update_task, UpdateTaskStageLfsRestore, 0);
+        update_task_set_progress(update_task, UpdateTaskStageIntRestore, 0);
 
-        CHECK_RESULT(lfs_backup_unpack(update_task->storage, furi_string_get_cstr(file_path)));
+        CHECK_RESULT(int_backup_unpack(update_task->storage, furi_string_get_cstr(file_path)));
 
         // Fix flags for production / development
 #ifdef FURI_DEBUG
@@ -173,7 +173,11 @@ static bool update_task_post_update(UpdateTask* update_task) {
             tmp_path = furi_string_alloc_set(update_task->update_path);
             storage_common_rename(
                 update_task->storage,
-                CFG_PATH("firstboot.flag"), // Poor naming, shouldn't be generic for all FW
+                EXT_PATH(".config/firstboot.flag"), // Poor naming, shouldn't be generic for all FW
+                FIRSTBOOT_FLAG_PATH);
+            storage_common_rename(
+                update_task->storage,
+                EXT_PATH(".config/momentum_firstboot.flag"), // Migrate to int on ext
                 FIRSTBOOT_FLAG_PATH);
             if(storage_common_stat(update_task->storage, FIRSTBOOT_FLAG_PATH, NULL) ==
                FSE_NOT_EXIST) {

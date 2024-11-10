@@ -107,7 +107,7 @@ static const IdMapping bart_zones[] = {
     {.id = 0x0023, .name = "South Hayward"},
     {.id = 0x0024, .name = "Union City"},
     {.id = 0x0025, .name = "Fremont"},
-    {.id = 0x0026, .name = "Daly City(2)?"},
+    {.id = 0x0026, .name = "Castro Valley"},
     {.id = 0x0027, .name = "Dublin/Pleasanton"},
     {.id = 0x0028, .name = "South San Francisco"},
     {.id = 0x0029, .name = "San Bruno"},
@@ -116,6 +116,8 @@ static const IdMapping bart_zones[] = {
     {.id = 0x002c, .name = "West Dublin/Pleasanton"},
     {.id = 0x002d, .name = "OAK Airport"},
     {.id = 0x002e, .name = "Warm Springs/South Fremont"},
+    {.id = 0x002f, .name = "Milpitas"},
+    {.id = 0x0030, .name = "Berryessa/North San Jose"},
 };
 static const size_t kNumBARTZones = COUNT(bart_zones);
 
@@ -138,6 +140,19 @@ static const IdMapping actransit_zones[] = {
 };
 static const size_t kNumACTransitZones = COUNT(actransit_zones);
 
+// Instead of persisting individual Station IDs, Caltrain saves Zone numbers.
+// https://www.caltrain.com/stations-zones
+static const IdMapping caltrain_zones[] = {
+    {.id = 0x0001, .name = "Zone 1"},
+    {.id = 0x0002, .name = "Zone 2"},
+    {.id = 0x0003, .name = "Zone 3"},
+    {.id = 0x0004, .name = "Zone 4"},
+    {.id = 0x0005, .name = "Zone 5"},
+    {.id = 0x0006, .name = "Zone 6"},
+};
+
+static const size_t kNumCaltrainZones = COUNT(caltrain_zones);
+
 //
 // Full agency+zone mapping.
 //
@@ -148,6 +163,7 @@ static const struct {
 } agency_zone_map[] = {
     {.agency_id = 0x0001, .zone_map = actransit_zones, .zone_count = kNumACTransitZones},
     {.agency_id = 0x0004, .zone_map = bart_zones, .zone_count = kNumBARTZones},
+    {.agency_id = 0x0006, .zone_map = caltrain_zones, .zone_count = kNumCaltrainZones},
     {.agency_id = 0x0012, .zone_map = muni_zones, .zone_count = kNumMUNIZones}};
 static const size_t kNumAgencyZoneMaps = COUNT(agency_zone_map);
 

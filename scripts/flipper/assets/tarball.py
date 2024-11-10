@@ -9,13 +9,17 @@ from .heatshrink_stream import HeatshrinkDataStreamHeader
 FLIPPER_TAR_FORMAT = tarfile.USTAR_FORMAT
 
 TAR_HEATSHRINK_EXTENSION = ".ths"
-TAR_GZIP_EXTENSION = ".tgz"
+TAR_GZIP_EXTENSION = ".tar.gz"
 
 
 def tar_sanitizer_filter(tarinfo: tarfile.TarInfo):
     tarinfo.gid = tarinfo.uid = 0
     tarinfo.mtime = 0
     tarinfo.uname = tarinfo.gname = "furippa"
+    if tarinfo.type == tarfile.DIRTYPE:
+        tarinfo.mode = 0o40755  # drwxr-xr-x
+    else:
+        tarinfo.mode = 0o644  # ?rw-r--r--
     return tarinfo
 
 

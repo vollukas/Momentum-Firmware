@@ -17,13 +17,15 @@ void power_cli_off(Cli* cli, FuriString* args) {
 void power_cli_reboot(Cli* cli, FuriString* args) {
     UNUSED(cli);
     UNUSED(args);
-    power_reboot(PowerBootModeNormal);
+    Power* power = furi_record_open(RECORD_POWER);
+    power_reboot(power, PowerBootModeNormal);
 }
 
 void power_cli_reboot2dfu(Cli* cli, FuriString* args) {
     UNUSED(cli);
     UNUSED(args);
-    power_reboot(PowerBootModeDfu);
+    Power* power = furi_record_open(RECORD_POWER);
+    power_reboot(power, PowerBootModeDfu);
 }
 
 void power_cli_5v(Cli* cli, FuriString* args) {
@@ -106,15 +108,17 @@ void power_cli(Cli* cli, FuriString* args, void* context) {
     furi_string_free(cmd);
 }
 
-#include <flipper_application/flipper_application.h>
 #include <cli/cli_i.h>
+CLI_PLUGIN_WRAPPER("power", power_cli)
 
-static const FlipperAppPluginDescriptor plugin_descriptor = {
-    .appid = CLI_PLUGIN_APP_ID,
-    .ep_api_version = CLI_PLUGIN_API_VERSION,
-    .entry_point = &power_cli,
-};
+void power_on_system_start(void) {
+#ifdef SRV_CLI
+    Cli* cli = furi_record_open(RECORD_CLI);
 
-const FlipperAppPluginDescriptor* power_cli_plugin_ep(void) {
-    return &plugin_descriptor;
+    cli_add_command(cli, "power", CliCommandFlagParallelSafe, power_cli_wrapper, NULL);
+
+    furi_record_close(RECORD_CLI);
+#else
+    UNUSED(power_cli);
+#endif
 }

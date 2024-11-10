@@ -171,7 +171,14 @@ void canvas_set_font_direction(Canvas* canvas, CanvasDirection dir) {
 }
 
 void canvas_invert_color(Canvas* canvas) {
-    canvas->fb.draw_color = !canvas->fb.draw_color;
+    if(canvas->fb.draw_color == ColorXOR && momentum_settings.dark_mode) {
+        // XOR is 0x02, invert changes it to 0x00 which is White
+        // Basically like resetting to background color
+        // In Dark Mode, background color is Black instead
+        canvas->fb.draw_color = ColorBlack;
+    } else {
+        canvas->fb.draw_color = !canvas->fb.draw_color;
+    }
 }
 
 void canvas_set_font(Canvas* canvas, Font font) {
@@ -549,9 +556,21 @@ void canvas_draw_xbm(
     size_t height,
     const uint8_t* bitmap) {
     furi_check(canvas);
+    canvas_draw_xbm_ex(canvas, x, y, width, height, IconRotation0, bitmap);
+}
+
+void canvas_draw_xbm_ex(
+    Canvas* canvas,
+    int32_t x,
+    int32_t y,
+    size_t width,
+    size_t height,
+    IconRotation rotation,
+    const uint8_t* bitmap_data) {
+    furi_check(canvas);
     x += canvas->offset_x;
     y += canvas->offset_y;
-    canvas_draw_u8g2_bitmap(&canvas->fb, x, y, width, height, bitmap, IconRotation0);
+    canvas_draw_u8g2_bitmap(&canvas->fb, x, y, width, height, bitmap_data, rotation);
 }
 
 void canvas_draw_glyph(Canvas* canvas, int32_t x, int32_t y, uint16_t ch) {
