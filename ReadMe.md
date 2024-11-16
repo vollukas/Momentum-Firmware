@@ -1,6 +1,12 @@
 <p align="center">
   <img src=".github/assets/logo.png" alt="Momentum Firmware">
-  <h2 align="center">for Flipper Zero</h2>
+  <h2>With 5 passport icons: Angry, Lonely, Okay, Happy, Awesome</h2>
+  <h2>With added **better-pet** asset pack</h2>
+  <h2> - Many vanilla-friendly(dolphin) animations, every level unlocks at least 1 new animation</h2>
+  <br/>
+  <h2 align="center">USE **BETTER-PET** BRANCH.</h2>
+  <h2 align="center">Dev branch is without any changes and I use it just to merge new updates from momentum</h2>
+  <br/>
 </p>
 
 <h2 align="center">
