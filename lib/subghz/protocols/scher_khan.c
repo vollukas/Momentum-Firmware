@@ -77,7 +77,7 @@ const SubGhzProtocol subghz_protocol_scher_khan = {
     .decoder = &subghz_protocol_scher_khan_decoder,
     .encoder = &subghz_protocol_scher_khan_encoder,
 
-    .filter = SubGhzProtocolFilter_AutoAlarms,
+    .filter = SubGhzProtocolFilter_Cars,
 };
 
 void* subghz_protocol_decoder_scher_khan_alloc(SubGhzEnvironment* environment) {
@@ -254,13 +254,8 @@ static void subghz_protocol_scher_khan_check_remote_controller(
         instance->btn = 0;
         instance->cnt = 0;
         break;
-    case 81: //MAGIC CODE PRO / PRO2 Response ???
-        *protocol_name = "MAGIC CODE PRO,\n Response";
-        instance->serial = 0;
-        instance->btn = 0;
-        instance->cnt = 0;
-        break;
-    case 82: //MAGIC CODE PRO / PRO2 Response ???
+    case 81: // MAGIC CODE PRO / PRO2 Response ???
+    case 82: // MAGIC CODE PRO / PRO2 Response ???
         *protocol_name = "MAGIC CODE PRO,\n Response";
         instance->serial = 0;
         instance->btn = 0;

@@ -2,7 +2,7 @@
 
 #include "infrared_settings.h"
 
-#include <furi_hal_power.h>
+#include <power/power_service/power.h>
 
 #include <string.h>
 #include <toolbox/path.h>
@@ -159,6 +159,7 @@ static InfraredApp* infrared_alloc(void) {
     app_state->is_otg_enabled = false;
     app_state->is_easy_mode = false;
     app_state->is_decode_enabled = true;
+    app_state->is_decode_forced = false;
     app_state->edit_target = InfraredEditTargetNone;
     app_state->edit_mode = InfraredEditModeNone;
     app_state->current_button_index = InfraredButtonIndexNone;
@@ -498,12 +499,12 @@ void infrared_set_tx_pin(InfraredApp* infrared, FuriHalInfraredTxPin tx_pin) {
 }
 
 void infrared_enable_otg(InfraredApp* infrared, bool enable) {
-    if(enable) {
-        if(!furi_hal_power_is_otg_enabled()) furi_hal_power_enable_otg();
-    } else {
-        if(furi_hal_power_is_otg_enabled()) furi_hal_power_disable_otg();
-    }
+    Power* power = furi_record_open(RECORD_POWER);
+
+    power_enable_otg(power, enable);
     infrared->app_state.is_otg_enabled = enable;
+
+    furi_record_close(RECORD_POWER);
 }
 
 static void infrared_load_settings(InfraredApp* infrared) {

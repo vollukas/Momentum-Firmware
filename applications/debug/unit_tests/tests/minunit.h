@@ -389,12 +389,14 @@ void minunit_printf_warning(const char* format, ...);
                 __func__,                                                                   \
                 __FILE__,                                                                   \
                 __LINE__,                                                                   \
-                minunit_tmp_e,                                                              \
                 minunit_tmp_r,                                                              \
+                minunit_tmp_e,                                                              \
                 minunit_tmp_m);                                                             \
             minunit_status = 1;                                                             \
             return;                                                                         \
         } else { minunit_print_progress(); })
+
+//-V:mu_assert_string_eq:526, 547
 
 #define mu_assert_string_eq(expected, result)                                         \
     MU__SAFE_BLOCK(                                                                   \
@@ -415,6 +417,8 @@ void minunit_printf_warning(const char* format, ...);
             minunit_status = 1;                                                       \
             return;                                                                   \
         } else { minunit_print_progress(); })
+
+//-V:mu_assert_mem_eq:526
 
 #define mu_assert_mem_eq(expected, result, size)                                   \
     MU__SAFE_BLOCK(                                                                \

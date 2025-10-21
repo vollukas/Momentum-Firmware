@@ -186,8 +186,6 @@ Bt* bt_alloc(void) {
     // API evnent
     bt->api_event = furi_event_flag_alloc();
 
-    bt->pin = 0;
-
     return bt;
 }
 
@@ -264,7 +262,6 @@ static bool bt_on_gap_event_callback(GapEvent event, void* context) {
     furi_assert(context);
     Bt* bt = context;
     bool ret = false;
-    bt->pin = 0;
     bool do_update_status = false;
     bool current_profile_is_serial =
         furi_hal_bt_check_profile_type(bt->current_profile, ble_profile_serial);
@@ -303,14 +300,12 @@ static bool bt_on_gap_event_callback(GapEvent event, void* context) {
         do_update_status = true;
         ret = true;
     } else if(event.type == GapEventTypePinCodeShow) {
-        bt->pin = event.data.pin_code;
         BtMessage message = {
             .type = BtMessageTypePinCodeShow, .data.pin_code = event.data.pin_code};
         furi_check(
             furi_message_queue_put(bt->message_queue, &message, FuriWaitForever) == FuriStatusOk);
         ret = true;
     } else if(event.type == GapEventTypePinCodeVerify) {
-        bt->pin = event.data.pin_code;
         ret = bt_pin_code_verify_event_handler(bt, event.data.pin_code);
     } else if(event.type == GapEventTypeUpdateMTU) {
         bt->max_packet_size = event.data.max_packet_size;
@@ -418,6 +413,7 @@ static void bt_change_profile(Bt* bt, BtMessage* message) {
         bt->current_profile = furi_hal_bt_change_app(
             message->data.profile.template,
             message->data.profile.params,
+            bt_keys_storage_get_root_keys(bt->keys_storage),
             bt_on_gap_event_callback,
             bt);
         if(bt->current_profile) {
@@ -473,7 +469,6 @@ static void bt_load_keys(Bt* bt) {
         bt_keys_storage_load(bt->keys_storage);
 
         bt->current_profile = NULL;
-
     } else {
         FURI_LOG_I(TAG, "Keys unchanged");
     }
@@ -481,8 +476,12 @@ static void bt_load_keys(Bt* bt) {
 
 static void bt_start_application(Bt* bt) {
     if(!bt->current_profile) {
-        bt->current_profile =
-            furi_hal_bt_change_app(ble_profile_serial, NULL, bt_on_gap_event_callback, bt);
+        bt->current_profile = furi_hal_bt_change_app(
+            ble_profile_serial,
+            NULL,
+            bt_keys_storage_get_root_keys(bt->keys_storage),
+            bt_on_gap_event_callback,
+            bt);
 
         if(!bt->current_profile) {
             FURI_LOG_E(TAG, "BLE App start failed");
@@ -525,19 +524,6 @@ static void bt_init_keys_settings(Bt* bt) {
     }
 
     bt_handle_reload_keys_settings(bt);
-}
-
-bool bt_remote_rssi(Bt* bt, uint8_t* rssi) {
-    furi_assert(bt);
-
-    uint8_t rssi_val;
-    uint32_t since = furi_hal_bt_get_conn_rssi(&rssi_val);
-
-    if(since == 0) return false;
-
-    *rssi = rssi_val;
-
-    return true;
 }
 
 int32_t bt_srv(void* p) {
