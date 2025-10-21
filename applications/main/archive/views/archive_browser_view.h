@@ -28,7 +28,7 @@ typedef enum {
     ArchiveTabNFC,
     ArchiveTabInfrared,
     ArchiveTabIButton,
-    ArchiveTabBadKb,
+    ArchiveTabBadUsb,
     ArchiveTabU2f,
     ArchiveTabApplications,
     ArchiveTabSearch,
@@ -95,6 +95,7 @@ struct ArchiveBrowserView {
     bool is_root;
     FuriTimer* scroll_timer;
     File* disk_image;
+    const char* override_home_path;
 };
 
 typedef struct {

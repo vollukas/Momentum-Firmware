@@ -22,7 +22,7 @@ typedef struct {
     float longitude;
 } SubGhzHistoryItem;
 
-ARRAY_DEF(SubGhzHistoryItemArray, SubGhzHistoryItem, M_POD_OPLIST)
+ARRAY_DEF(SubGhzHistoryItemArray, SubGhzHistoryItem, M_POD_OPLIST) //-V658
 
 #define M_OPL_SubGhzHistoryItemArray_t() ARRAY_OPLIST(SubGhzHistoryItemArray, M_POD_OPLIST)
 
@@ -266,11 +266,11 @@ bool subghz_history_add_to_history(
     SubGhzHistoryItem* item = SubGhzHistoryItemArray_push_raw(instance->history->data);
     item->preset = malloc(sizeof(SubGhzRadioPreset));
     item->type = decoder_base->protocol->type;
-    if(decoder_base->protocol->filter & SubGhzProtocolFilter_Weather) {
-        // Other code uses protocol type to check if signal is usable
-        // so we can't change the actual protocol type, we fake it here
-        item->type = SubGhzProtocolWeatherStation;
-    }
+    // if(decoder_base->protocol->filter & SubGhzProtocolFilter_Weather) {
+    //     // Other code uses protocol type to check if signal is usable
+    //     // so we can't change the actual protocol type, we fake it here
+    //     item->type = SubGhzProtocolWeatherStation;
+    // }
     item->preset->frequency = preset->frequency;
     item->preset->name = furi_string_alloc();
     furi_string_set(item->preset->name, preset->name);

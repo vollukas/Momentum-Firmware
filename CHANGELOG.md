@@ -1,85 +1,159 @@
 ### Breaking Changes:
-- Lockscreen: Separate 'Allow RPC While Locked' settings for USB/BLE (#343 by @956MB)
-  - Both default to OFF like before
-  - If you had enabled this option before, you will need to re-enable
+- OFW: JS: SDK 1.0:
+  - Scripts using these modules will need to be updated
+  - Module `gui/submenu`:
+    - The API now takes submenu items as view children, instead of as a view prop
+    - Effort required to update scripts using `gui/submenu`: very minimal
+  - Module `gui/widget`:
+    - The `button` event now returns an object with `key` and `type`, instead of just the key name
+    - Effort required to update scripts using `gui/widget`: very minimal
 
 ### Added:
 - Apps:
-  - Games: Pinball0 (by @rdefeo)
-  - GPIO: FlipperHTTP: FlipWorld (by @jblanked)
-  - GPIO: TEA5767 FM Radio (by @coolshrimp)
-  - NFC: Metroflip (by @luu176)
-  - USB: USB Game Controller (by @expected-ingot)
-- Infrared:
-  - Easy Learn mode to quickly save buttons without typing (#350 by @jaylikesbunda)
-  - Move Easy Learn and Learn RAW toggles inside Learning/Receiving screen for quick access, RAW mode doesn't require Debug anymore (by @Willy-JL)
-- Archive: Setting to show dynamic path in file browser statusbar (#322 by @956MB)
-- CLI: Add `clear` and `cls` commands, add `did you mean ...?` command suggestion (#342 by @dexvleads)
-- Main Menu: Add coverflow menu style (#314 by @CodyTolene)
-- MNTM Settings: Add Menu Style submenu for easier selection (#359 by @jaylikesbunda)
-- BadKB: Added german Mac keyboard Layout (#325 by @Cloudy261)
-- UL: Sub-GHz: Jolly Motors support with add manually (by @pkooiman & @xMasterX)
-- OFW: Desktop: Add winter animations (by @Astrrra)
-- API:
-  - Added `canvas_draw_icon_animation_ex()` to draw animated icons resized (#314 by @CodyTolene)
-  - OFW: Added `flipper_format_write_empty_line()` (by @janwiesemann)
-- OFW: Furi: Pipe support (by @portasynthinca3)
-- OFW: Furi: Thread stdin support (by @portasynthinca3)
-- OFW: RPC: Command to send a signal once (by @Astrrra)
-- OFW: Add VCP break support (by @gsurkov)
+  - Games: Geometry Flip (by @goosedev72-projects)
+  - GPIO:
+    - [GPIO] Explorer (by @EvgeniGenchev07)
+    - [KT0803] FM Transmitter (by @goosedev72-projects)
+    - [SPI] Terminal (by @janwiesemann)
+  - GPIO/Debug:
+    - [FTDI232H] FlipTDI (by @Skorpionm)
+    - [INA2xx] INA Meter (by @cepetr)
+  - GPIO/ESP: [ESP32] Ghost ESP (by @jaylikesbunda)
+  - GPIO/FlipBoard:
+    - FlipBoard Blinky (by @jamisonderek)
+    - FlipBoard Keyboard (by @jamisonderek)
+    - FlipBoard Signal (by @jamisonderek)
+    - FlipBoard Simon (by @jamisonderek)
+  - GPIO/FlipperHTTP: Free Roam (by @jblanked)
+  - GPIO/GPS: [NMEA] Nearby Files (by @Stichoza)
+  - GPIO/Sensors: [MH-Z19] CO2 Logger (by @harryob2)
+  - iButton: iButton Converter (by @Leptopt1los)
+  - Infrared:
+    - Hitachi AC Remote (by @dogtopus)
+    - LIDAR Emulator (by @regaly)
+    - Midea AC Remote (by @xakep666)
+    - Mitsubishi AC Remote (by @achistyakov)
+    - Xbox Controller (by @gebeto)
+  - Media:
+    - Fmatrix (by @misterwaztaken)
+    - Image Viewer (by @polioan)
+    - Space Playground (by @alanfortlink)
+    - Video Player (by @LTVA1)
+  - NFC: NFC-Eink (by @RebornedBrain)
+  - RFID: Simultaneous UHF RFID Reader (by @haffnerriley)
+  - Sub-GHz:
+    - Chief Cooker (by @denr01)
+    - Flipper Share (by @lomalkin)
+    - HC-11 Modem (by @Giraut)
+    - Sub Analyzer (by @RocketGod-git)
+    - Sub-GHz Scheduler (by @shalebridge, fixes by @xMasterX)
+  - Tools:
+    - FlipCrypt (by @Tyl3rA)
+    - Programmer Calculator (by @armixz)
+    - Resistance Calculator (by @instantiator)
+    - Tasks (by @MadLadSquad)
+    - Voltage Calculator (by @HappyAmos)
+  - USB:
+    - LEGO Dimensions Toy Pad (by @SegerEnd)
+    - USB-MIDI (by @kribesk, original by @DrZlo13)
+- NFC:
+  - XERO: MIFARE Ultralight C feature parity with MIFARE Classic in native NFC app (by @noproto)
+    - Dictionary attack: Uses system and user dictionaries stored under /nfc/assets/ to unlock Ultralight C tags
+    - Key management: Extra Actions → MIFARE Ultralight C Keys in the NFC app allows you to add, list, and remove Ultralight C keys from your Flipper
+    - UI: Dictionary attack scene and menu options
+  - OFW: FeliCa Service Directory Traverse + Dump All Unencrypted-Readable Services' Blocks (by @zinongli)
+  - OFW: FeliCa Emulation Handle certain Polling commands in firmware (by @dogtopus)
+  - OFW: Amusement IC Card Parser for FeliCa Lite & Lite-S (by @zinongli)
+  - OFW: MFC 1k Banapass Parser (by @zinongli)
+  - Add MIFARE Classic "Show Keys" UI (#473 by @aaronjamt)
+- SubGHz:
+  - UL: Roger (static 28 bit) with add manually support (by @xMasterX & @mishamyte)
+  - UL: V2 Phoenix full support (button switch, add manually, counter decrypt/encrypt) (by @xMasterX & @RocketGod-git, original code by @Skorpionm)
+  - UL: Add Keeloq support for - Motorline (with add manually support), Rosh, Pecinin, Rossi, Merlin, Steelmate (by @xMasterX & @RocketGod-git)
+  - UL: Nero Radio static parse and display more data (by @xMasterX)
+  - UL: Marantec protocol implement CRC verification display and add manually support (by @xMasterX & @li0ard, original code by @Skorpionm)
+  - UL: Keeloq Comunello add manually support (by @xMasterX)
+  - UL: Add variant of 'Add Manually' menu with manual editing for each value (by @MrLego8-9)
+  - UL: Add ZKTeco 430.5 MHz add manually support (by @xMasterX)
+  - UL: Add Elplast 18bit static code protocol (hello Hackcat ^_^)
+  - UL: Try to decode BFT (2 buttons remotes only) on the fly in regular Read mode (by @xMasterX)
+- RFID:
+  - Support writing Securakey, Jablotron and FDX-B to EM4305 cards (#434 by @jamisonderek)
+  - OFW: Show ISO-3166 Country Names For Pet Chips (by @zinongli)
+- BT Remote:
+  - Add Rename Option for BT Remote, simplify Bad KB BLE profile (#439 by @aaronjamt & @WillyJL)
+  - OFW: Make mouse clicker button selectable (by @LordMZTE)
+- MNTM Settings:
+  - Add Main Menu support for directories and generic files (including JS files) (#331 by @956MB & @WillyJL)
+  - Add Skip Sliding Animations option for Lockscreen (#436 by @aaronjamt)
+- CLI:
+  - OFW: NFC CLI commands (by @RebornedBrain)
+  - OFW: Buzzer command (by @ivanbarsukov)
+- JS: Added all missing GUI views for JS (by @portasynthinca3):
+  - Added `gui/button_menu`
+  - Added `gui/button_panel`
+  - Added `gui/menu`
+  - Added `gui/number_input`
+  - Added `gui/popup`
+  - Added `gui/vi_list`
+  - Changed API for `gui/submenu`, see breaking changes above
+- Desktop: Add Keybinds support for directories (#331 by @956MB & @WillyJL)
+- Input Settings: Add Vibro Trigger option (#429 by @956MB)
+- Archive: Support opening and favoriting Picopass files (by @WillyJL)
+- OFW: GUI: Add date/time input module (by @aaronjamt)
 
 ### Updated:
 - Apps:
-  - BT/USB Remote: Add PTT support for Gather (by @SapphicCode)
-  - Chess: Fix illegal move bug (by @956MB)
-  - Color Guess: Simplify app code (by @leedave)
-  - Countdown Timer: Default to 60 seconds on open (by @andrejka27)
-  - Cross Remote: Fix Sub-GHz actions rolling code support, animations for transmit, allow interrupting chain (by @leedave), loop transmit feature (by @miccayo)
-  - ESP Flasher: Add c3 and c6 to s3 option (by @jaylikesbunda), update bins for Marauder to 1.2.0 (by @justcallmekoko) and FlipperHTTP to 1.6.1 (by @jblanked)
-  - FlipBIP: Refactor to make adding coins easier (by @xtruan)
-  - FlipLibrary: Wikipedia, dog facts, random quotes, weather, asset price, predictions, trivia, advice, uuid and many more, bug fixes (by @jblanked), holidays, improvements to connectivity and progress (by @jamisonderek)
-  - FlipSocial: Improved authentication, loading screens, many bug fixes, bio and friend counts, new feed screen with posted time, search users and contacts, home announcements and notifications, private feed option, endless feed (by @jblanked), RPC_KEYBOARD support (by @jamisonderek)
-  - FlipStore: Many bugfixes, support downloading ESP32 and VGM firmwares and Github repos, allow deleting apps, memory fixes, update Marauder, use Flipper catalog API (by @jblanked), more improvements (by @jamisonderek)
-  - FlipTrader: Improved progress display, added connectivity check on startup (by @jamisonderek)
-  - FlipWeather: Stability improvements (by @jblanked), improved progress display, added connectivity check on startup (by @jamisonderek)
-  - FlipWiFi: Improve error handling, update scan loading and parsing, many bug/crash fixes, max 100 network scan, add some fast commands (by @jblanked), add connectivity check on startup (by @jamisonderek)
-  - KeyCopier: Support for formats AR4, M1, AM7, Y2, Y11, S22, NA25, CO88, LW4, LW5, NA12, RU45, H75, B102, Y159, KA14, YM63, SFIC, RV (by @HonestLocksmith)
-  - NFC Maker: Allow setting custom UID, code cleanup (by @Willy-JL), show extra symbols for WiFi SSID/Password and Emails (by @956MB)
-  - Nightstand: Show battery percentage and show AM/PM in timer mode (by @956MB)
-  - Oscilloscope: Add simple spectrum analyser and basic software scaling support (by @anfractuosity)
-  - Picopass: Handle write key retry when a different card is presented, save SR as legacy from saved menu (by @bettse)
-  - Pokemon Trade Tool: Update to gblink v0.63 which includes saving/loading of pin configurations for the EXT link interface, bug fixes (by @kbembedded)
-  - Snake 2.0: Progress saving, endless mode, game timer, fruit positioning bugfixes (by @Willzvul)
-  - uPython: Enabled extra functions for the `random` module, optimized speaker note constants to save space (by @ofabel)
-  - WebCrawler: New BROWSE option to read HTML pages, many bugfixes (by @jblanked), improved progress display, added connectivity check on startup (by @jamisonderek)
-  - WiFi Marauder: AirTag Spoof, flipper blespam, sniff airtag and flipper, list airtag (by @0xchocolate)
-  - UL: NFC Magic: Added possibility to write 7b MFC to Gen1 tags (by @mishamyte)
-  - UL: Unitemp: Fixed handling of hPa units (by @shininghero)
-  - UL: Fixed apps for firmware USB CDC callback changes (by @xMasterX)
-- Infrared: Update audio, bluray and tv universal remotes (#348 #358 by @jaylikesbunda)
-- NFC:
-  - OFW: Replace mf_classic_dict.nfc with Proxmark3 version (by @onovy)
-  - OFW: More station IDs for Clipper plugin (by @ted-logan)
-- OFW: Infrared: Add IR command for NAD DR2 D7050 D3020 (by @nikos9742)
+  - XERO: MFKey: Key recovery is 20% faster, new write buffering of Static Encrypted Nested key candidates performs recovery 70x faster (by @noproto)
+  - UL: Sub-GHz Remote: Add possibility to use custom buttons (by @MrLego8-9)
+  - Asteroids: Bugfixes, title screen, Drone Buddy power-up (by @SimplyMinimal)
+  - Combo Cracker: Allow press and hold to change values, add tutorial (by @TAxelAnderson), support alphabetic combination locks (by @henrygab)
+  - ESP Flasher: Bump Marauder 1.8.4 (by @justcallmekoko), add C5 support (by @Play2BReal), more reliable bootloader mode on SWCLK (by @WillyJL)
+  - FlipDownloader: Added a new option to download GitHub repositories with dedicated keyboard, add auto updating (by @jblanked)
+  - FlipSocial: C++ rewrite, comments on feed posts, simpler logic and registration (by @jblanked)
+  - FlipWiFi: Minor bugfixes (by @jblanked)
+  - Flipper Blackhat: Add Deauth Broadcast command (by @o7-machinehum)
+  - KeyCopier: Added Weiser WR3 key format (by @lightos), added Suzuki SUZ18 key format (by @RIcePatrol)
+  - Mass Storage: Add ability to spoof USB identity values (by @xtruan)
+  - Metroflip: Fix unsupported card crash, RENFE Suma 10 support, GEG Connect AID added, Top Up log parsing and animations, 16 new rail lines, support for parsing area codes, saving function for Suica/Japan Rail IC, bugfixes (by @luu176)
+  - NFC Maker: Support making empty/blank NDEF payloads (by @WillyJL)
+  - NFC Playlist: Refactor playlist worker, new settings layout and management, loop setting, controls to move between items (by @acegoal07)
+  - NMEA GPS: Moved to GPIO/GPS subfolder (by @WillyJL)
+  - Passy: Misc memory management bugfixes, misc UI improvements (by @qistoph)
+  - Seader: Fix ATS handling (by @NVX), reset SAM on error (by @bettse)
+  - Sentry Safe: New interface, settings & help page (by @H4ckd4ddy)
+  - Seos Compatible: Add keys v2 support with per-device encryption (by @bettse)
+  - Sub-GHz Playlist: Fix crash on disallowed frequencies (by @WillyJL)
+  - Weather Station: Added support for solight TE44 (by @fersingb)
+  - Weebo: Prevent 0x88 in UID[3], add more figures to the database (by @bettse)
+  - WiFi Marauder: Support for ESP32Marauder 1.8.4 (by @justcallmekoko)
+- Sub-GHz:
+  - UL: Add 868.46 MHz to default subghz freqs list (by @xMasterX)
+  - UL: Reduce less popular freqs in default hopper preset, make it faster (by @xMasterX)
+  - UL: Tune Linear (add better EZCode support), Dickert MAHS decoders (by @xMasterX)
+- Infrared:
+  - OFW: Add an old JVC model to universal remotes (by @zgracem)
+  - OFW: Add Daikin FTXN25LV1B9 and Toyotomi KTN22-12R32 to universal remotes (by @minchogaydarov)
+- OFW: BLE: Improved pairing security (by @hedger)
+- JS: Expose button event type in `gui/widget` button callback, see breaking changes above (by @WillyJL)
+- UL: Docs: Update Sub-GHz DoorHan programming instructions (by @li0ard)
 
 ### Fixed:
-- Desktop: Fixed Wardriving animation design (by @Davim09)
-- Main Menu: Fix MNTM style battery percent off by 1 (#339 by @956MB)
-- OFW: Fix lost BadBLE keystrokes (by @Astrrra)
-- OFW: GPIO: Fix USB UART Bridge Crash by increasing system stack size (by @Astrrra)
-- OFW: Loader: Fix BusFault in handling of OOM (by @Willy-JL)
+- CLI: Fix long delay with quick connect/disconnect, qFlipper should connect faster as expected again (by @WillyJL)
+- Storage: Dont send mount event if SD mounted at boot, fix SD card icon showing late on boot (by @WillyJL)
+- Bad KB:
+  - Fix modifier keys with HOLD/RELEASE commands (by @WillyJL)
+  - OFW: Fix demo_windows.txt for newer version of ai enabled Windows Notepad not able to keep up with default fast input text (by @ase1590)
+- Desktop: Fix lock screen hang (#438 by @aaronjamt)
 - NFC:
-  - XERO: Fix issue with MFC key recovery state machine performing key reuse early (by @noproto)
-  - OFW: Plantain parser Last payment amount fix (by @mxcdoam)
-  - OFW: Fix skylander ID reading (by @bettse)
-  - OFW: Fix MIFARE Plus detection (by @GMMan)
-  - OFW: Fix ISO15693 stuck in wrong mode (by @RebornedBrain)
-  - OFW: Fix MFUL PWD_AUTH command creation when 0x00 in password (by @GMMan)
-  - OFW: Fix typo for `mf_classic_key_cahce_get_next_key()` function (by @luu176)
-- OFW: U2F: Fix message digest memory leak (by @GMMan)
-- OFW: JS: SDK workaround incorrect serial port handling by OS (by @portasynthinca3)
-- OFW: FBT: Fix invalid path errors on Windows with UTF8 paths (by @Alex4386)
+  - Fix incorrect Saflok year formula (#433 by @Eltrick)
+  - Fix read crash with unexpectedly large MFC AUTH(0) response, eg with Chameleon Ultra NTAG emualtion (by @WillyJL)
+  - Fix slashes in prefilled filename (by @WillyJL)
+- FBT: Fix redundant decl for apps using an icon disabled in API (by @WillyJL)
+- UL: Sub-GHz: Fix crash in add manually menu (by @xMasterX)
+- OFW: GUI: Fix Number Input Save Icon (by @zinongli)
+- OFW: JS: Stop PWM on exit (by @portasynthinca3)
+- OFW: Sub-GHz: Fix TIM17 config not applied immediately (by @Aerosnail)
 
 ### Removed:
-- NFC: Previous fix for ISO15693 stuck in wrong mode (#225)
-  - Removes APIs `nfc_iso15693_detect_mode()`, `nfc_iso15693_force_1outof4()`, `nfc_iso15693_force_1outof256()`
+- Disabled FURI_TRACE due to flash space constraints, `furi_check failed` crashes will no longer show the file path of the error for now

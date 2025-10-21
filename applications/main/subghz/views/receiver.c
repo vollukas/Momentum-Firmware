@@ -23,7 +23,7 @@ typedef struct {
     uint16_t repeats;
 } SubGhzReceiverMenuItem;
 
-ARRAY_DEF(SubGhzReceiverMenuItemArray, SubGhzReceiverMenuItem, M_POD_OPLIST)
+ARRAY_DEF(SubGhzReceiverMenuItemArray, SubGhzReceiverMenuItem, M_POD_OPLIST) //-V658
 
 #define M_OPL_SubGhzReceiverMenuItemArray_t() \
     ARRAY_OPLIST(SubGhzReceiverMenuItemArray, M_POD_OPLIST)
@@ -38,7 +38,7 @@ static const Icon* ReceiverItemIcons[] = {
     [SubGhzProtocolTypeUnknown] = &I_Quest_7x8,
     [SubGhzProtocolTypeStatic] = &I_Static_9x7,
     [SubGhzProtocolTypeDynamic] = &I_Dynamic_9x7,
-    [SubGhzProtocolWeatherStation] = &I_Weather_7x8,
+    // [SubGhzProtocolWeatherStation] = &I_Weather_7x8,
     [SubGhzProtocolTypeBinRAW] = &I_Raw_9x7,
 };
 

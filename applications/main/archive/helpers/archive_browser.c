@@ -18,7 +18,7 @@ static void
     ArchiveTabEnum tab = archive_get_tab(browser);
 
     if((item_cnt == 0) && (archive_is_home(browser)) && (tab != ArchiveTabBrowser) &&
-       (tab != ArchiveTabDiskImage || !browser->disk_image)) {
+       (tab != ArchiveTabSearch) && (tab != ArchiveTabDiskImage || !browser->disk_image)) {
         archive_switch_tab(browser, browser->last_tab_switch_dir);
     } else if(!furi_string_start_with_str(browser->path, "/app:")) {
         with_view_model(
@@ -116,12 +116,13 @@ static void archive_long_load_cb(void* context) {
         browser->view, ArchiveBrowserViewModel * model, { model->folder_loading = true; }, true);
 }
 
-static void archive_file_browser_set_path(
+void archive_file_browser_set_path(
     ArchiveBrowserView* browser,
     FuriString* path,
     const char* filter_ext,
     bool skip_assets,
-    bool hide_dot_files) {
+    bool hide_dot_files,
+    const char* override_home_path) {
     furi_assert(browser);
     if(!browser->worker_running) {
         browser->worker =
@@ -137,6 +138,7 @@ static void archive_file_browser_set_path(
         file_browser_worker_set_config(
             browser->worker, path, filter_ext, skip_assets, hide_dot_files);
     }
+    browser->override_home_path = override_home_path;
 }
 
 bool archive_is_item_in_array(ArchiveBrowserViewModel* model, uint32_t idx) {
@@ -385,7 +387,9 @@ bool archive_is_home(ArchiveBrowserView* browser) {
         return true;
     }
 
-    const char* default_path = archive_get_default_path(archive_get_tab(browser));
+    const char* default_path = browser->override_home_path ?
+                                   browser->override_home_path :
+                                   archive_get_default_path(archive_get_tab(browser));
     return furi_string_cmp_str(browser->path, default_path) == 0;
 }
 
@@ -489,6 +493,9 @@ void archive_show_file_menu(ArchiveBrowserView* browser, bool show, bool manage)
                         } else {
                             model->menu = false;
                         }
+                    } else if(selected->type == ArchiveFileTypeSetting) {
+                        model->menu_manage = false;
+                        model->menu_can_switch = false;
                     }
                 } else {
                     model->menu_manage = true;
@@ -534,10 +541,10 @@ void archive_switch_tab(ArchiveBrowserView* browser, InputKey key) {
         with_view_model(
             browser->view, ArchiveBrowserViewModel * model, { archive = model->archive; }, false);
         scene_manager_set_scene_state(archive->scene_manager, ArchiveAppSceneSearch, false);
-        if(archive->thread) {
-            furi_thread_join(archive->thread);
-            furi_thread_free(archive->thread);
-            archive->thread = NULL;
+        if(archive->search_thread) {
+            furi_thread_join(archive->search_thread);
+            furi_thread_free(archive->search_thread);
+            archive->search_thread = NULL;
         }
     }
 
@@ -561,7 +568,7 @@ void archive_switch_tab(ArchiveBrowserView* browser, InputKey key) {
     bool tab_empty = true;
     bool is_app_tab = furi_string_start_with_str(browser->path, "/app:");
     if(tab == ArchiveTabFavorites) {
-        if(archive_favorites_count() > 0) {
+        if(archive_favorites_count(browser) > 0) {
             tab_empty = false;
         }
     } else if(is_app_tab) {
@@ -586,7 +593,12 @@ void archive_switch_tab(ArchiveBrowserView* browser, InputKey key) {
                                   tab == ArchiveTabInternal ? false :
                                                               !momentum_settings.show_hidden_files;
             archive_file_browser_set_path(
-                browser, browser->path, archive_get_tab_ext(tab), skip_assets, hide_dot_files);
+                browser,
+                browser->path,
+                archive_get_tab_ext(tab),
+                skip_assets,
+                hide_dot_files,
+                NULL);
             tab_empty = false; // Empty check will be performed later
         }
     }

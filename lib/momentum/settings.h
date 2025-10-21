@@ -80,6 +80,7 @@ typedef struct {
     bool lockscreen_statusbar;
     bool lockscreen_prompt;
     bool lockscreen_transparent;
+    bool lockscreen_skip_animation;
     BatteryIcon battery_icon;
     bool status_icons;
     bool bar_borders;
@@ -89,10 +90,12 @@ typedef struct {
     bool show_internal_tab;
     BrowserPathMode browser_path_mode;
     uint32_t favorite_timeout;
+    bool scroll_marquee;
     bool dark_mode;
     bool rgb_backlight;
     uint32_t butthurt_timer;
-    uint32_t charge_cap;
+    bool midnight_format_00;
+    bool popup_overlay;
     SpiHandle spi_cc1101_handle;
     SpiHandle spi_nrf24_handle;
     FuriHalSerialId uart_esp_channel;

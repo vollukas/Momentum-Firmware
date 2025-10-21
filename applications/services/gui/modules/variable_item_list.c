@@ -5,6 +5,7 @@
 #include <assets_icons.h>
 #include <m-array.h>
 #include <stdint.h>
+#include <momentum/settings.h>
 
 struct VariableItem {
     FuriString* label;
@@ -18,7 +19,7 @@ struct VariableItem {
     FuriString* locked_message;
 };
 
-ARRAY_DEF(VariableItemArray, VariableItem, M_POD_OPLIST);
+ARRAY_DEF(VariableItemArray, VariableItem, M_POD_OPLIST); //-V658
 
 struct VariableItemList {
     View* view;
@@ -146,6 +147,9 @@ static void variable_item_list_draw_callback(Canvas* canvas, void* _model) {
     elements_scrollbar(canvas, model->position, VariableItemArray_size(model->items));
 
     if(model->locked_message_visible) {
+        if(momentum_settings.popup_overlay) {
+            canvas_draw_overlay(canvas);
+        }
         canvas_set_color(canvas, ColorWhite);
         canvas_draw_box(canvas, 8, 10, 110, 48);
         canvas_set_color(canvas, ColorBlack);
